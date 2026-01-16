@@ -26,7 +26,7 @@ def research_agent() -> Agent:
     return Agent(
         name="ResearchAgent",
         model=Gemini(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.0-flash",
             retry_options=retry_config
         ),
         instruction="""
