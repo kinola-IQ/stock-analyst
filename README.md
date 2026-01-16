@@ -2,7 +2,7 @@
 - **Name:**: Stock Analyst
 - **Description:**: A FastAPI application that runs a finance analysis agent to analyze stock tickers using a streaming agent runner and various data tools (yfinance, Pinecone, sentiment analysis, etc.).
 
-![image alt](https://github.com/kinola-IQ/stock-analyst/blob/ad987bedb2d20ec3e52e4923160e4f64bd57f1ca/Screenshot%202026-01-16%20111620.png)
+![image alt](https://github.com/kinola-IQ/stock-analyst/blob/5915f5bc8ffb90d02525ebfae7a2de30eb651819/Originial%20Design%20Plan.png)
 
 
 **Quick Start**
