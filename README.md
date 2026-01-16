@@ -48,8 +48,6 @@ curl -X POST http://127.0.0.1:8501/v1/analyze-stock/ \
 - The project references Google ADK (`google.adk` imports) and the `google-genai` client; ensure appropriate credentials and API access are configured for agent execution.
 - Pinecone and other external services are listed in `requirements.txt` — configure keys/secrets in environment variables or a secrets manager before running agent features that depend on them.
 
-If you want, I can run the test suite, add an example Postman collection, or extend the README with architecture diagrams.
-
 **Examples**
 - **cURL:**
 
@@ -122,5 +120,3 @@ pip install pytest
 pytest -q
 ```
 
-**Optional: Postman / Collection**
-- I can add an example Postman collection or a small Python client module if you want to automate requests.
