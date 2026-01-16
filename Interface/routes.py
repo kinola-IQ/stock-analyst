@@ -7,7 +7,7 @@ from google.genai import types
 
 # custom modules
 from ..system.utility.schema import UserInputSchema, AgentOutputSchema
-
+from ..system.utility.result_storage import ResultStorage
 router = APIRouter()
 
 
@@ -43,11 +43,13 @@ async def analyze_stock(ticker: UserInputSchema, request: Request):
         )
 
         final_response_text = "Agent did not produce a final response."
-
+        result_store = ResultStorage()
         # Iterate through streamed agent responses
         async for event in runner.run_async(
             user_id=user_id, session_id=session_id, new_message=content
         ):
+            # saving results in memory
+            result_store.save({event.content: event.content.parts[0].text})
             if event.is_final_response():
                 if event.content and event.content.parts:
                     final_response_text = event.content.parts[0].text
