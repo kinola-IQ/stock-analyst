@@ -14,6 +14,8 @@ from ..finance_agent.tools import (
 )
 from ...utility.utils import retry_config
 
+# model provider
+from llama_index.llms.ollama import Ollama
 
 def root_agent() -> LlmAgent:
     """Return a root LLM agent that coordinates the research workflow."""
@@ -32,10 +34,7 @@ def root_agent() -> LlmAgent:
 
     return LlmAgent(
         name="ResearchCoordinator",
-        model=Gemini(
-            model="gemini-2.5-flash-lite",
-            retry_options=retry_config(),
-        ),
+        model= Ollama(model = 'qwen3:4b'),
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
         tools=[AgentTool(research_agent()), log_tool, analyse_ticker],

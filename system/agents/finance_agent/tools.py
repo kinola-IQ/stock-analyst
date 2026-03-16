@@ -8,7 +8,7 @@ import datetime
 import json
 
 # custom modules
-from ...utility.utils import retry_config
+# from ...utility.utils import retry_config
 from ...utility.logger import logger
 from .tools_config.ticker_tools import (
     fetch_company_data,
@@ -16,6 +16,9 @@ from .tools_config.ticker_tools import (
     score_news_sentiment,
     generate_analysis_script,
     decide_action)
+
+# model provider
+from llama_index.llms.ollama import Ollama
 
 # Research agent for websearching
 def research_agent() -> Agent:
@@ -25,10 +28,7 @@ def research_agent() -> Agent:
     """
     return Agent(
         name="ResearchAgent",
-        model=Gemini(
-            model="gemini-2.0-flash",
-            retry_options=retry_config
-        ),
+        model=Ollama(model = 'qwen3:4b'),
         instruction="""
         You are a specialized research agent.
         Your only job is to use the google_search tool\
