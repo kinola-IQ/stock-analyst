@@ -47,6 +47,9 @@ COPY --from=builder /app /home/appuser/app
 RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
+# pulling model
+RUN Ollama pull qwen3:4b
+
 # Expose port and set environment defaults
 EXPOSE 8501
 ENV PYTHONUNBUFFERED=1
