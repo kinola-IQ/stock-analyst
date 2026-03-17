@@ -8,7 +8,7 @@ vaderSentiment>=3.3
 pinecone-client>=2.2
 google-genai>=0.1
 llama_index>=0.5
-Ollama>=0.1
+ollama>=0.1
 # Development dependencies
 pytest>=7.0
 pytest-mock>=3.10
