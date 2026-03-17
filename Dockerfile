@@ -20,7 +20,7 @@ RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install Python dependencies
-RUN apt-get update && apt-get install -y Ollama
+# RUN apt-get update && apt-get install -y Ollama
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -49,7 +49,7 @@ RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
 # pulling model
-RUN ollama pull qwen3:4b
+# RUN ollama pull qwen3:4b
 
 # Expose port and set environment defaults
 EXPOSE 8501
