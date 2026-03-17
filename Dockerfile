@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     curl \
  && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && apt-get install -y ollama
 WORKDIR /app
 
 # Copy only dependency files first for caching
@@ -48,7 +48,6 @@ RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
 # pulling model
-RUN apt-get update && apt-get install -y ollama
 RUN Ollama pull qwen3:4b
 
 # Expose port and set environment defaults
