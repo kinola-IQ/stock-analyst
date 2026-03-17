@@ -20,7 +20,7 @@ RUN python -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install Python dependencies
-RUN apt-get update && apt-get install -y ollama
+RUN apt-get update && apt-get install -y Ollama
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
