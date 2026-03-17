@@ -31,7 +31,7 @@ class ResultStorage:
             cls(content)
             logger.info("saved successfully")
         except Exception as err:
-            logger.error(f"error, could not save: error message - {err}")
+            logger.error("error, could not save: error message - %s", err)
 
     def _instantiated(self) -> bool:
         """Assigns attributes from self.content and returns True on success."""
@@ -52,7 +52,7 @@ class ResultStorage:
             logger.info("attributes assigned")
             return True
         except Exception as err:
-            logger.error(f"attributes could not be assigned: {err}")
+            logger.error("attributes could not be assigned: %s", err)
             return False
 
     # Convenience helpers

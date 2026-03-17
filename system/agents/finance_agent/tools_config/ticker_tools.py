@@ -9,10 +9,11 @@ Separated functions for:
 5) running a lightweight rule-based decision (buy/sell/hold)
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import datetime
 import json
 import yfinance as yf
+
 
 # Lazy imports inside functions to fail gracefully if not installed
 def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "1y") -> Dict[str, Any]:
@@ -253,7 +254,7 @@ def generate_analysis_script(symbol: str,
         "print('Company:', info.get('longName') or info.get('shortName') or symbol)",
         "hist = t.history(period='1y')",
         "print('Latest close:', hist['Close'].iloc[-1] if not hist.empty else info.get('currentPrice'))",
-        f"print('Generated metrics snapshot:')",
+        "print('Generated metrics snapshot:')",
         f"metrics_snapshot = {json.dumps(metrics, default=str)}",
         "print(metrics_snapshot)",
         "",

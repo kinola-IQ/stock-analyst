@@ -1,11 +1,8 @@
 """ module to configure agent tools"""
 
 from google.adk.agents import Agent
-from google.adk.models.google_llm import Gemini
 from google.adk.tools import google_search
-from typing import Dict, Any, List, Optional, Tuple 
-import datetime 
-import json
+from typing import Dict, Any
 
 # custom modules
 # from ...utility.utils import retry_config
@@ -20,6 +17,7 @@ from .tools_config.ticker_tools import (
 # model provider
 from llama_index.llms.ollama import Ollama
 
+
 # Research agent for websearching
 def research_agent() -> Agent:
     """
@@ -28,7 +26,7 @@ def research_agent() -> Agent:
     """
     return Agent(
         name="ResearchAgent",
-        model=Ollama(model = 'qwen3:4b'),
+        model=Ollama(model='qwen3:4b'),
         instruction="""
         You are a specialized research agent.
         Your only job is to use the google_search tool\
@@ -51,8 +49,8 @@ def log_tool(message: str):
 # Convenience wrapper that ties everything together
 def analyse_ticker(symbol: str) -> Dict[str, Any]:
     """
-    High-level wrapper that runs the a full research pipeline and returns a structured result.
-    usefull for executing the following steps in order:
+    High-level wrapper that runs a full research pipeline and returns a
+    structured result. Useful for executing the following steps in order:
     1) fetching company data via yfinance
     2) extracting financial metrics
     3) scoring news sentiment
