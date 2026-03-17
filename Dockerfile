@@ -3,11 +3,11 @@ FROM python:3.11-slim AS builder
 
 # Install build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ollama \
     build-essential \
     gcc \
     libpq-dev \
     curl \
+    ollama \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
