@@ -48,7 +48,7 @@ RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
 # pulling model
-RUN curl -fsSL https://ollama.com/install.sh | sh
+RUN apt-get update && apt-get install -y ollama
 RUN Ollama pull qwen3:4b
 
 # Expose port and set environment defaults
