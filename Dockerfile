@@ -3,12 +3,13 @@ FROM python:3.11-slim AS builder
 
 # Install build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    Ollama \
     build-essential \
     gcc \
     libpq-dev \
     curl \
  && rm -rf /var/lib/apt/lists/*
-RUN apt-get update && apt-get install -y ollama
+
 WORKDIR /app
 
 # Copy only dependency files first for caching
