@@ -14,10 +14,10 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ghcr.io/${{ github.repository }}/stock-analyst-backend:${{ github.sha }}
+      run: docker build . --file Dockerfile --tag ghcr.io/kinola-iq/stock-analyst/stock-analyst-backend:${{ github.sha }}
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image
-      run: docker push ghcr.io/${{ github.repository }}/stock-analyst-backend:${{ github.sha }}
+      run: docker push ghcr.io/kinola-iq/stock-analyst/stock-analyst-backend:${{ github.sha }}
