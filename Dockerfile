@@ -3,7 +3,7 @@ FROM python:3.11-slim AS builder
 
 # Install build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    Ollama \
+    ollama \
     build-essential \
     gcc \
     libpq-dev \
@@ -49,7 +49,7 @@ RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
 # pulling model
-RUN Ollama pull qwen3:4b
+RUN ollama pull qwen3:4b
 
 # Expose port and set environment defaults
 EXPOSE 8501
