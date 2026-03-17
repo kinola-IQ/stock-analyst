@@ -13,9 +13,11 @@ from typing import Dict, Any, List, Optional
 import datetime
 import json
 import yfinance as yf
+from system.utility.utils import retry_on_exception
 
 
 # Lazy imports inside functions to fail gracefully if not installed
+@retry_on_exception(max_attempts=3, delay=1.0)
 def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "1y") -> Dict[str, Any]:
     """
     Resolve company name and pull financials and recent news using yfinance.

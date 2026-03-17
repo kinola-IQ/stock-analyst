@@ -1,53 +1,218 @@
-**Project Overview**
-- **Name:**: Stock Analyst
-- **Description:**: A FastAPI application that runs a finance analysis agent to analyze stock tickers using a streaming agent runner and various data tools (yfinance, Pinecone, sentiment analysis, etc.).
+# Stock Analyst
 
-![image alt](https://github.com/kinola-IQ/stock-analyst/blob/5915f5bc8ffb90d02525ebfae7a2de30eb651819/Originial%20Design%20Plan.png)
+A FastAPI application that runs a finance analysis agent to analyze stock tickers using a streaming agent runner and various data tools (yfinance, Pinecone, sentiment analysis, etc.).
 
+![Design Plan](Originial%20Design%20Plan.png)
 
-**Quick Start**
-- **Prerequisites:**: Python 3.10+ and pip
-- **Install dependencies:**:
+## Features
 
+- AI-powered stock analysis with buy/sell/hold recommendations
+- Real-time financial data extraction from yfinance
+- Sentiment analysis of news headlines
+- Vector database integration with Pinecone
+- Structured logging and monitoring
+- API key authentication
+- Comprehensive test suite
+
+## Quick Start
+
+### Prerequisites
+- Python 3.10+
+- pip
+- Ollama (for local LLM)
+- API keys for external services
+
+### Installation
+
+1. Clone the repository:
 ```bash
-python -m pip install -r requirements.txt
+git clone <repository-url>
+cd stock-analyst
 ```
 
-- **Run locally:**:
+2. Create virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up environment variables (see Configuration section)
+
+5. Start Ollama and pull the model:
+```bash
+ollama pull qwen3:4b
+```
+
+6. Run the application:
 ```bash
 uvicorn main:app --host 127.0.0.1 --port 8501
 ```
 
-**Environment**
-- **Common env vars:**: `APP_NAME`, `USER_ID`, `SESSION_ID`, `PORT` (defaults provided in `main.py`).
+## Configuration
 
-**API**
-- **Endpoint:**: `POST /v1/analyze-stock/` — accepts JSON matching the `UserInputSchema` and returns `AgentOutputSchema`.
-- **Example cURL:**:
+Create a `.env` file in the root directory with the following variables:
+
+```env
+# API Configuration
+API_KEY=your-secret-api-key-here
+
+# External Service Keys
+PINECONE_API_KEY=your-pinecone-key
+GOOGLE_GENAI_API_KEY=your-google-genai-key
+
+# Application Settings
+APP_NAME=stock-analyst
+USER_ID=default-user
+SESSION_ID=default-session
+PORT=8501
+
+# Optional: Pinecone Configuration
+PINECONE_INDEX_NAME=stock-analysis
+```
+
+## API Usage
+
+### Authentication
+All API requests require an API key in the `X-API-Key` header:
 
 ```bash
 curl -X POST http://127.0.0.1:8501/v1/analyze-stock/ \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: your-secret-api-key-here" \
   -d '{"ticker":"AAPL"}'
 ```
 
-**Project Structure**
-- **Root files:**: `main.py`, `requirements.txt`
-- **API router:**: Interface/routes.py
-- **Agents & tools:**: system/agents/finance_agent (agent, tools, tools_config)
-- **Utilities:**: system/utility (logger, schema, result storage, tests)
+### Endpoints
 
-**Notable Files**
-- The FastAPI entry: [main.py](main.py)
-- API routes: [Interface/routes.py](Interface/routes.py)
-- Dependency list: [requirements.txt](requirements.txt)
-- Agent implementation: [system/agents/finance_agent/agent.py](system/agents/finance_agent/agent.py)
+- `POST /v1/analyze-stock/` - Analyze a stock ticker
+- `GET /v1/health` - Health check
 
-**Testing & Development**
-- There are unit tests under `system/utility` (`test_utils.py`, `test_result_storage.py`). Run tests with `pytest` (install `pytest` if needed).
+### Request/Response Format
 
-**Notes & Next Steps**
+**Request:**
+```json
+{
+  "ticker": "AAPL"
+}
+```
+
+**Response:**
+```json
+{
+  "final_summary": "BUY: Apple Inc. shows strong financials with positive sentiment..."
+}
+```
+
+## Testing
+
+Run the test suite:
+
+```bash
+pip install pytest pytest-mock pytest-asyncio
+pytest tests/
+```
+
+## Deployment
+
+### Docker
+
+Build and run with Docker:
+
+```bash
+docker build -t stock-analyst .
+docker run -p 8501:8501 --env-file .env stock-analyst
+```
+
+### Production Deployment
+
+1. Set up environment variables securely
+2. Use a production WSGI server like gunicorn
+3. Configure reverse proxy (nginx)
+4. Set up monitoring and logging
+5. Enable HTTPS
+
+Example with gunicorn:
+```bash
+pip install gunicorn
+gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8501
+```
+
+## Project Structure
+
+```
+stock-analyst/
+├── main.py                 # FastAPI application entry point
+├── requirements.txt        # Python dependencies
+├── Dockerfile             # Docker configuration
+├── tests/                 # Test suite
+│   ├── test_ticker_tools.py
+│   ├── test_tools.py
+│   └── test_routes.py
+├── Interface/
+│   └── routes.py          # API routes and endpoints
+├── system/
+│   ├── agents/
+│   │   └── finance_agent/
+│   │       ├── agent.py   # Agent implementation
+│   │       ├── tools.py   # Agent tools
+│   │       └── tools_config/
+│   │           └── ticker_tools.py  # Financial analysis tools
+│   └── utility/
+│       ├── logger.py      # Logging utilities
+│       ├── schema.py      # Pydantic schemas
+│       ├── result_storage.py  # In-memory storage
+│       ├── utils.py       # Helper functions
+│       └── test_*.py      # Unit tests
+└── notebook/
+    └── pinecone_index.ipynb  # Jupyter notebook for experimentation
+```
+
+## Development
+
+### Running Tests
+```bash
+pytest tests/ -v
+```
+
+### Code Quality
+```bash
+pip install black flake8
+black .
+flake8 .
+```
+
+### Adding New Features
+1. Add business logic to appropriate module in `system/`
+2. Update API routes in `Interface/routes.py`
+3. Add tests in `tests/`
+4. Update documentation
+
+## Monitoring
+
+The application includes:
+- Structured logging with request/response tracking
+- Health check endpoint
+- Error handling with detailed logging
+- Request latency monitoring
+
+Logs are output to stdout/stderr for containerized deployments.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+## License
+
+[Add license information here]
 - The project references Google ADK (`google.adk` imports) and the `google-genai` client; ensure appropriate credentials and API access are configured for agent execution.
 - Pinecone and other external services are listed in `requirements.txt` — configure keys/secrets in environment variables or a secrets manager before running agent features that depend on them.
 
