@@ -1,40 +1,14 @@
-# ---------- Builder stage ----------
-FROM python:3.11-slim AS builder
-
-# Install build deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    libpq-dev \
-    curl \
- && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy only dependency files first for caching
-COPY requirements.txt .
-
-# Create virtualenv to isolate build artifacts
-ENV VIRTUAL_ENV=/opt/venv
-RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
 # ---------- Runtime stage ----------
 FROM python:3.11-slim AS runtime
 
-# Install runtime deps (curl + ca-certificates needed for installer)
+# Install runtime deps required by the Ollama installer
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    zstd \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Ollama as root (installer requires root privileges)
+# Install Ollama (runs as root during image build)
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Create non-root user and app dir
@@ -48,7 +22,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY --from=builder /app /home/appuser/app
 
-# Add entrypoint script (will start ollama and pull models at runtime)
+# Add entrypoint script (start ollama + pull models at container runtime)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
