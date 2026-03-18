@@ -49,7 +49,8 @@ RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
 
 # pulling model
-# RUN ollama pull qwen3:4b
+RUN curl -fsSL https://ollama.com/install.sh | sh
+RUN ollama serve & sleep 5 && ollama pull qwen3:4b
 
 # Expose port and set environment defaults
 EXPOSE 8501
