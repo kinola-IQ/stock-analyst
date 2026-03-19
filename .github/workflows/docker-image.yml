@@ -32,8 +32,8 @@ jobs:
           docker build \
             -t ghcr.io/kinola-iq/stock-analyst-backend:${{ github.sha }} \
             -t ghcr.io/kinola-iq/stock-analyst-backend:latest \
-            -t kinola-iq/stock-analyst-backend:${{ github.sha }} \
-            -t kinola-iq/stock-analyst-backend:latest \
+            -t ${{ secrets.DOCKER_USERNAME }}/stock-analyst-backend:${{ github.sha }} \
+            -t ${{ secrets.DOCKER_USERNAME }}/stock-analyst-backend:latest \
             .
 
       # Push to GHCR
