@@ -34,4 +34,4 @@ jobs:
       run: docker push ghcr.io/kinola-iq/stock-analyst/stock-analyst-backend:${{ github.sha }}
 
     - name: Push image to Docker Hub
-      run: docker push docker.io/kinola/stock-analyst-backend:${{ github.sha }}
+      run: docker push docker.io/kinola-iq/stock-analyst/stock-analyst-backend:${{ github.sha }}
