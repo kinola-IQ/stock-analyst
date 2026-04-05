@@ -1,6 +1,6 @@
 # Test Cases Explanation
 
-This document provides a brief explanation of each test case found in the test files within the `tests/` folder.
+This document provides a brief explanation of each test case present in the test files within the `tests/` folder.
 
 ## tests/test_routes.py
 
