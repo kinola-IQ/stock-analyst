@@ -7,7 +7,7 @@ used so callers can continue to operate in offline or test environments.
 
 Environment variables supported:
 - `PINECONE_API_KEY` (required for Pinecone)
-- `PINECONE_ENV` (Pinecone environment/region)
+- `PINECONE_ENV` (Pinecone environment/region, e.g., 'us-east-1')
 - `PINECONE_INDEX` (index name)
 """
 from typing import Any, Dict, List, Optional, Tuple
@@ -15,6 +15,15 @@ import os
 import logging
 
 logger = logging.getLogger(__name__)
+
+try:
+    from pinecone import Pinecone, ServerlessSpec
+    PINECONE_AVAILABLE = True
+except ImportError:
+    logger.warning("Pinecone client not available; using in-memory storage.")
+    PINECONE_AVAILABLE = False
+    Pinecone = None  # type: ignore
+    ServerlessSpec = None  # type: ignore
 
 
 class PineconeStorage:
@@ -32,7 +41,9 @@ class PineconeStorage:
         dimension: int = 1536,
     ) -> None:
         self._api_key = api_key or os.getenv("PINECONE_API_KEY")
-        self._environment = environment or os.getenv("PINECONE_ENV")
+        self._environment = (
+            environment or os.getenv("PINECONE_ENV", "us-east-1")
+        )
         self._index_name = (
             index_name or os.getenv("PINECONE_INDEX", "stock-analyst")
         )
@@ -43,32 +54,28 @@ class PineconeStorage:
         self._pinecone = None
         self._in_memory: Dict[str, Dict[str, Any]] = {}
 
-        if not self._api_key:
+        if not self._api_key or not PINECONE_AVAILABLE:
             logger.info(
-                "Pinecone API key not provided; using in-memory storage."
-            )
-            return
-
-        try:
-            import pinecone  # type: ignore
-
-            self._pinecone = pinecone
-        except ImportError:
-            logger.exception(
-                "Failed to import Pinecone client; using in-memory storage."
+                "Pinecone API key not provided or client unavailable; "
+                "using in-memory storage."
             )
             return
 
         try:
             # Initialize Pinecone client
-            self._pinecone.init(
-                api_key=self._api_key, environment=self._environment
-            )
+            self._pinecone = Pinecone(api_key=self._api_key)
 
-            # Create index if it doesn't exist
-            if self._index_name not in self._pinecone.list_indexes():
+            # Check if index exists
+            existing_indexes = [
+                idx.name for idx in self._pinecone.list_indexes()
+            ]
+            if self._index_name not in existing_indexes:
+                # Create index with serverless spec
+                spec = ServerlessSpec(cloud="aws", region=self._environment)
                 self._pinecone.create_index(
-                    name=self._index_name, dimension=self._dimension
+                    name=self._index_name,
+                    dimension=self._dimension,
+                    spec=spec
                 )
 
             self._index = self._pinecone.Index(self._index_name)
@@ -78,9 +85,9 @@ class PineconeStorage:
             )
         except Exception as exc:  # pragma: no cover - environment dependent
             logger.exception(
-                "Failed to initialize Pinecone index; falling back to in-memory storage."
+                "Failed to initialize Pinecone index; falling back to "
+                "in-memory storage. Error: %s", exc
             )
-            logger.debug("Pinecone init error: %s", exc)
 
     def upsert(
         self,
@@ -92,34 +99,37 @@ class PineconeStorage:
         if self._enabled and self._index is not None:
             try:
                 # Pinecone accepts a list of tuples: (id, vector, metadata)
-                self._index.upsert([(vector_id, vector, metadata or {})])
+                self._index.upsert(
+                    vectors=[(vector_id, vector, metadata or {})]
+                )
                 return
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Pinecone upsert failed; falling back to in-memory store."
+                    "Pinecone upsert failed; falling back to in-memory store. "
+                    "Error: %s", exc
                 )
 
         # in-memory fallback
-        self._in_memory[vector_id] = {"vector": vector, "metadata": metadata or {}}
+        self._in_memory[vector_id] = {
+            "vector": vector,
+            "metadata": metadata or {}
+        }
 
     def fetch(self, vector_id: str) -> Optional[Dict[str, Any]]:
         """Fetch a vector and metadata by id."""
         if self._enabled and self._index is not None:
             try:
-                resp = self._index.fetch([vector_id])
+                resp = self._index.fetch(ids=[vector_id])
                 # Pinecone returns a dict with 'vectors'
-                vectors = (
-                    resp.get("vectors")
-                    if isinstance(resp, dict)
-                    else getattr(resp, "vectors", None)
-                )
+                vectors = resp.get("vectors", {})
                 if not vectors:
                     return None
                 data = vectors.get(vector_id)
                 return data
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Pinecone fetch failed; falling back to in-memory store."
+                    "Pinecone fetch failed; falling back to in-memory store. "
+                    "Error: %s", exc
                 )
 
         return self._in_memory.get(vector_id)
@@ -132,7 +142,8 @@ class PineconeStorage:
     ) -> List[Dict[str, Any]]:
         """Query nearest vectors to `vector` and return list of results.
 
-        Each result is a dict containing `id`, `score`, and optional `metadata`.
+        Each result is a dict containing `id`, `score`, and optional
+        `metadata`.
         """
         if self._enabled and self._index is not None:
             try:
@@ -141,17 +152,13 @@ class PineconeStorage:
                     top_k=top_k,
                     include_metadata=include_metadata,
                 )
-                # resp.matches is a list of matches in many SDKs
-                matches = []
-                if isinstance(resp, dict):
-                    for m in resp.get("matches", []):
-                        matches.append(m)
-                else:
-                    matches = getattr(resp, "matches", []) or []
+                # resp.matches is a list of matches
+                matches = resp.get("matches", [])
                 return matches
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Pinecone query failed; falling back to in-memory similarity search."
+                    "Pinecone query failed; falling back to in-memory "
+                    "similarity search. Error: %s", exc
                 )
 
         # naive in-memory similarity. Dot-product or cosine is not implemented;
@@ -169,12 +176,14 @@ class PineconeStorage:
             out = []
             for _id, score in results[:top_k]:
                 rec = self._in_memory.get(_id, {})
-                out.append(
-                    {"id": _id, "score": score, "metadata": rec.get("metadata", {})}
-                )
+                out.append({
+                    "id": _id,
+                    "score": score,
+                    "metadata": rec.get("metadata", {})
+                })
             return out
-        except Exception:
-            logger.exception("In-memory query failed.")
+        except Exception as exc:
+            logger.exception("In-memory query failed. Error: %s", exc)
             return []
 
     def delete(self, vector_id: str) -> None:
@@ -183,9 +192,10 @@ class PineconeStorage:
             try:
                 self._index.delete(ids=[vector_id])
                 return
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Pinecone delete failed; falling back to in-memory delete."
+                    "Pinecone delete failed; falling back to in-memory "
+                    "delete. Error: %s", exc
                 )
 
         if vector_id in self._in_memory:
@@ -198,22 +208,17 @@ class PineconeStorage:
                 # Pinecone does not provide a direct 'list ids' in all SDKs.
                 # Fetching ids is SDK-dependent; return empty list here.
                 return []
-            except Exception:
+            except Exception as exc:
                 logger.exception(
-                    "Pinecone list ids failed; falling back to in-memory list."
+                    "Pinecone list ids failed; falling back to in-memory "
+                    "list. Error: %s", exc
                 )
 
         return list(self._in_memory.keys())
 
     def close(self) -> None:
         """Close resources if needed."""
-        try:
-            if self._enabled and self._pinecone is not None:
-                # Some SDKs require explicit deinit; this is best-effort.
-                if hasattr(self._pinecone, "deinit"):
-                    self._pinecone.deinit()
-        except Exception:
-            logger.exception("Failed to close Pinecone client cleanly.")
+        # Modern Pinecone client handles cleanup automatically
 
 
 # Convenience default instance
