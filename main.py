@@ -3,6 +3,7 @@
 import os
 import uvicorn
 from fastapi.responses import PlainTextResponse
+from fastapi.exceptions import RequestValidationError
 from fastapi import FastAPI
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
