@@ -2,6 +2,7 @@
 
 import os
 import uvicorn
+from fastapi.responses import PlainTextResponse
 from fastapi import FastAPI
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -49,6 +50,12 @@ def create_app() -> FastAPI:
             session_service=app.state._session_service,
         )
 
+    # redirects users to documentation
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request, exc):
+        'outputs amessage to redirect users to documentation'
+        msg = "input validation error: see documentation at http:/127.0.0.0.0:8000/docs"
+        return PlainTextResponse(msg, status_code=422)
     return app
 
 
