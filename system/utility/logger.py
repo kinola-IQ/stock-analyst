@@ -1,9 +1,23 @@
 """module to log system events"""
 import logging
 import time
+from logging.handlers import RotatingFileHandler
+
+# Create a rotating file handler
+handler = RotatingFileHandler(
+    "app.log",        # log file name
+    maxBytes=2000,    # rotate after ~2KB
+    backupCount=5     # keep 5 old log files
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[handler]
+)
 
 # instantiating logger
-logger = logging.getLogger("uvicorn.error")
+logger = logging.getLogger("uvicorn")
 
 
 # keep track of responsiveness across endpoints
