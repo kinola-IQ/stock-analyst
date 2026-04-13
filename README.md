@@ -1,7 +1,8 @@
 # Stock Analyst
 
 A FastAPI application that leverages Google's Agent Development Kit (ADK) to run a multi-agent research workflow for comprehensive stock analysis. The system coordinates research, financial data analysis, and sentiment scoring to produce actionable buy/sell/hold recommendations.
-
+## System Design Diagram
+![System Diagram](https://github.com/kinola-IQ/stock-analyst/blob/e3ab15d924ac83fc00113e73e233f52aa701383f/Originial%20Design%20Plan.png)
 ## Features
 
 - **Multi-agent system**: Research Coordinator agent orchestrates specialized sub-agents (ResearchAgent)
