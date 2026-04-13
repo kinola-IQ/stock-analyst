@@ -1,7 +1,12 @@
-from system.utility.utils import retry_config
+"""
+tests utility funcionality
+"""
+
+from ..system.utility.utils import retry_config
 
 
 def test_retry_config_values():
+    """"tests that retry_config returns expected values"""
     cfg = retry_config()
     # basic contract checks
     assert hasattr(cfg, "attempts")

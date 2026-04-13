@@ -13,9 +13,8 @@ from .tools_config.ticker_tools import (
     score_news_sentiment,
     generate_analysis_script,
     decide_action)
-
-# model provider
-from llama_index.llms.ollama import Ollama
+from ...utility.model import load_model
+from ...utility.result_storage import ResultStorage
 
 
 # Research agent for websearching
@@ -26,7 +25,7 @@ def research_agent() -> Agent:
     """
     return Agent(
         name="ResearchAgent",
-        model=Ollama(model='qwen3:4b'),
+        model=load_model(),
         instruction="""
         You are a specialized research agent.
         Your only job is to use the google_search tool\
@@ -74,3 +73,9 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
         "script": script
     }
     return result
+
+
+# save summary of search results
+def save_summary(summary: str):
+    """useful for saving a summary of search results."""
+    return ResultStorage.save({"summary": summary})

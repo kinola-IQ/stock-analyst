@@ -12,8 +12,11 @@ Separated functions for:
 from typing import Dict, Any, List, Optional
 import datetime
 import json
+import logging
 import yfinance as yf
 from system.utility.utils import retry_on_exception
+
+logger = logging.getLogger(__name__)
 
 
 # Lazy imports inside functions to fail gracefully if not installed
@@ -58,17 +61,21 @@ def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "
     try:
         raw_news = ticker.news or []
         for n in raw_news[:top_n_news]:
+            if not isinstance(n, dict):
+                continue
             title = n.get("title") or n.get("headline") or ""
-            link = n.get("link") or n.get("link")
+            link = n.get("link") or ""
             publisher = n.get("publisher") or n.get("source") or ""
             ts = n.get("providerPublishTime")
             if ts:
                 try:
                     ts = datetime.datetime.fromtimestamp(int(ts)).isoformat()
-                except Exception:
-                    pass
-            news.append({"title": title, "link": link, "publisher": publisher, "time": ts})
-    except Exception:
+                except (ValueError, OSError):
+                    ts = None
+            if title:
+                news.append({"title": title, "link": link, "publisher": publisher, "time": ts})
+    except Exception as e:
+        logger.warning(f"Failed to fetch news for {symbol}: {e}")
         news = []
 
     # History
@@ -148,20 +155,22 @@ def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]
             metrics["revenue"] = float(rev) if rev is not None else None
             metrics["net_income"] = float(net) if net is not None else None
 
-            # revenue growth: compare first two columns if present
+            # revenue growth: compare most recent vs. previous year
             try:
                 if fin.shape[1] >= 2:
-                    # most recent column index 0, previous 1
-                    rev_new = _get_row(fin, rev_candidates)
+                    rev_new = None
                     rev_old = None
                     for c in rev_candidates:
                         if c in fin.index:
-                            if fin.shape[1] >= 2:
-                                rev_old = fin.loc[c].iloc[1]
+                            row = fin.loc[c]
+                            if len(row) >= 2:
+                                rev_new = float(row.iloc[-1]) if row.iloc[-1] is not None else None
+                                rev_old = float(row.iloc[-2]) if row.iloc[-2] is not None else None
                             break
                     if rev_new is not None and rev_old not in (None, 0):
                         metrics["revenue_growth_pct"] = float((rev_new - rev_old) / abs(rev_old)) * 100.0
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Revenue growth calculation failed: {e}")
                 metrics["revenue_growth_pct"] = None
     except Exception:
         pass
@@ -181,21 +190,24 @@ def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]
 
             total_debt = _get_val(bal, debt_candidates)
             total_equity = _get_val(bal, equity_candidates)
-            metrics["total_debt"] = float(total_debt) if total_debt is not None else None
-            metrics["total_equity"] = float(total_equity) if total_equity is not None else None
-            if metrics["total_debt"] is not None and metrics["total_equity"] not in (None, 0):
+            
+            if total_debt is not None:
+                metrics["total_debt"] = float(total_debt)
+            if total_equity is not None:
+                metrics["total_equity"] = float(total_equity)
+            
+            if (metrics["total_debt"] is not None and metrics["total_equity"] is not None 
+                and metrics["total_equity"] > 0):
                 metrics["debt_to_equity"] = float(metrics["total_debt"]) / float(metrics["total_equity"])
-            else:
-                metrics["debt_to_equity"] = None
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Balance sheet parsing failed: {e}")
 
     return metrics
 
 
 def score_news_sentiment(headlines: List[str]) -> float:
     """
-    Score news sentiment using vaderSentiment if available; fallback to a tiny wordlist.
+    Score news sentiment using vaderSentiment if available; fallback to enhanced wordlist.
 
     Returns average compound score in range [-1, 1].
     """
@@ -212,15 +224,20 @@ def score_news_sentiment(headlines: List[str]) -> float:
             s = analyzer.polarity_scores(h).get("compound", 0.0)
             scores.append(s)
         return float(sum(scores) / len(scores)) if scores else 0.0
-    except Exception:
-        # Fallback tiny lexicon
-        POS = {"good", "great", "positive", "beat", "beats", "up", "gain", "gains", "growth", "strong", "profit", "outperform"}
-        NEG = {"bad", "worse", "miss", "missed", "down", "loss", "losses", "weak", "decline", "fall", "cut", "warn"}
+    except ImportError:
+        logger.debug("vaderSentiment not available, using fallback sentiment analysis")
+        # Fallback enhanced lexicon
+        POS = {"good", "great", "positive", "beat", "beats", "up", "gain", "gains", "growth", "strong", 
+               "profit", "profits", "outperform", "surge", "rally", "excellent", "bullish", "boost"}
+        NEG = {"bad", "worse", "miss", "missed", "down", "loss", "losses", "weak", "decline", "fall", 
+               "cut", "warn", "warning", "bearish", "slump", "crash", "plunge"}
         if not headlines:
             return 0.0
         total = 0.0
         count = 0
         for h in headlines:
+            if not h:
+                continue
             words = set(w.strip(".,!?:;()[]\"'").lower() for w in h.split())
             pos = len(words & POS)
             neg = len(words & NEG)
@@ -229,6 +246,9 @@ def score_news_sentiment(headlines: List[str]) -> float:
             total += (pos - neg) / (pos + neg)
             count += 1
         return float(total / count) if count else 0.0
+    except Exception as e:
+        logger.error(f"Sentiment analysis failed: {e}")
+        return 0.0
 
 
 def generate_analysis_script(symbol: str,
@@ -271,8 +291,6 @@ def generate_analysis_script(symbol: str,
         "print('Script generated on', datetime.utcnow().isoformat())",
     ]
     script_text = "\n".join(script_lines)
-
-
     return script_text
 
 
@@ -360,26 +378,34 @@ def decide_action(metrics: Dict[str, Any],
     if pe is not None:
         try:
             pe_val = float(pe)
-            if pe_val < thresholds["pe_low"]:
-                pos += 1
-                reasons.append(f"low PE {pe_val:.1f}")
-            elif pe_val > thresholds["pe_high"]:
-                neg += 1
-                reasons.append(f"high PE {pe_val:.1f}")
+            if pe_val > 0:
+                if pe_val < thresholds["pe_low"]:
+                    pos += 1
+                    reasons.append(f"low PE {pe_val:.1f}")
+                elif pe_val > thresholds["pe_high"]:
+                    neg += 1
+                    reasons.append(f"high PE {pe_val:.1f}")
+                else:
+                    reasons.append(f"PE in range {pe_val:.1f}")
             else:
-                reasons.append(f"PE in range {pe_val:.1f}")
-        except Exception:
+                reasons.append("PE invalid (non-positive)")
+        except (ValueError, TypeError):
+            logger.debug(f"PE parsing error: {pe}")
             reasons.append("PE parsing error")
     else:
         reasons.append("PE unavailable")
 
-    score = pos - neg
-    if score >= 2:
-        verdict = "BUY"
-    elif score <= -2:
-        verdict = "SELL"
-    else:
+    # Weighted decision: no signal insufficient for strong verdict
+    if pos == 0 and neg == 0:
         verdict = "HOLD"
+    else:
+        score = pos - neg
+        if score >= 2:
+            verdict = "BUY"
+        elif score <= -2:
+            verdict = "SELL"
+        else:
+            verdict = "HOLD"
 
     return {
         "verdict": verdict,

@@ -28,16 +28,6 @@ COPY . .
 # ---------- Runtime stage ----------
 FROM python:3.11-slim AS runtime
 
-# Install runtime deps required by the Ollama installer
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    ca-certificates \
-    zstd \
- && rm -rf /var/lib/apt/lists/*
-
-# Install Ollama (runs as root during image build)
-RUN curl -fsSL https://ollama.com/install.sh | sh
-
 # Create non-root user and app dir
 RUN useradd --create-home appuser
 WORKDIR /home/appuser/app
@@ -49,10 +39,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY --from=builder /app /home/appuser/app
 
-# Add entrypoint script (start ollama + pull models at container runtime)
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 # Set ownership and switch to non-root user
 RUN chown -R appuser:appuser /home/appuser/app
 USER appuser
@@ -61,5 +47,4 @@ EXPOSE 8501
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8501
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8501", "--loop", "uvloop", "--workers", "1"]

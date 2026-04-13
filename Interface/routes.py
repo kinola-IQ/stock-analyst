@@ -1,14 +1,16 @@
 """module defining the FastAPI routes for stock analysis."""
 
 import os
+from typing import Optional
+from datetime import datetime
 
 from fastapi import HTTPException, APIRouter, Request, Depends, Header
 from google.genai import types
 
 # custom modules
 from ..system.utility.schema import UserInputSchema, AgentOutputSchema
-from ..system.utility.result_storage import ResultStorage
 from ..system.utility.logger import logger
+from ..system.utility.model import load_model
 router = APIRouter()
 
 
@@ -16,8 +18,10 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
     """Verify the API key from request headers."""
     expected_key = os.getenv("API_KEY")
     if not expected_key:
-        raise HTTPException(status_code=500, detail="API key not configured")
+        logger.error("API key not configured in environment")
+        raise HTTPException(status_code=500, detail="Service configuration error")
     if x_api_key != expected_key:
+        logger.warning("Invalid API key attempt", provided_key_length=len(x_api_key))
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
@@ -27,9 +31,15 @@ async def analyze_stock(ticker: UserInputSchema, request: Request, api_key: str 
 
     Reads the runner and session identifiers from `request.app.state`.
     """
-    logger.info("Starting stock analysis", ticker=ticker.ticker, user_id=request.app.state.user_id)
+    # Validate input
+    if not ticker.ticker or not ticker.ticker.strip():
+        logger.warning("Empty ticker symbol provided")
+        raise HTTPException(status_code=400, detail="Ticker symbol cannot be empty")
+    
+    ticker_symbol = ticker.ticker.strip().upper()
+    logger.info("Starting stock analysis", ticker=ticker_symbol, user_id=request.app.state.user_id)
     try:
-        print(f"\n>>> ticker: {ticker}")
+        logger.debug("Analyzing ticker", ticker=ticker_symbol)
 
         # retrieve runner and session info from app state
         runner = getattr(request.app.state, "runner", None)
@@ -50,7 +60,7 @@ async def analyze_stock(ticker: UserInputSchema, request: Request, api_key: str 
 
         # Package the user's query into ADK format
         content = types.Content(
-            role="user", parts=[types.Part(text=ticker.ticker)]
+            role="user", parts=[types.Part(text=ticker_symbol)]
         )
 
         final_response_text = "Agent did not produce a final response."
@@ -58,21 +68,48 @@ async def analyze_stock(ticker: UserInputSchema, request: Request, api_key: str 
         async for event in runner.run_async(
             user_id=user_id, session_id=session_id, new_message=content
         ):
-            # saving results in memory
-            ResultStorage.save({event.content: event.content.parts[0].text})
+           
+           # save final response when agent signals completion
             if event.is_final_response():
                 if event.content and event.content.parts:
                     final_response_text = event.content.parts[0].text
                 break
 
-        logger.info("Stock analysis completed", ticker=ticker.ticker, verdict=final_response_text[:50])
-        return AgentOutputSchema(final_summary=final_response_text)
+        logger.info("Stock analysis completed", ticker=ticker_symbol, verdict=final_response_text[:50])
+        return AgentOutputSchema(final_summary=final_response_text, timestamp = datetime.now())
     except Exception as exc:
-        logger.error("Stock analysis failed", ticker=ticker.ticker, error=str(exc))
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        logger.error("Stock analysis failed", ticker=ticker_symbol, error=type(exc).__name__)
+        raise HTTPException(status_code=500, detail="Stock analysis failed. Please try again.") from exc
 
 
-@router.get("/health")
-async def health_check():
+@router.get("/health_runner")
+async def health_check(request: Request) -> dict:
     """Health check endpoint."""
-    return {"status": "healthy", "service": "stock-analyst"}
+    try:
+        runner = getattr(request.app.state, "runner", None)
+        if runner is None:
+            logger.warning("Health check failed: runner not initialized")
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        return {
+            "status": "healthy",
+            "service": "stock-analyst",
+            "runner_initialized": runner is not None
+        }
+    except Exception as exc:
+        logger.error("Health check failed", error=type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Service health check failed") from exc
+
+@router.get("/health_model")
+def health_check_model() -> dict:
+    """Health check endpoint for model."""
+    try:
+        model = load_model()
+        return {
+            "status": "healthy",
+            "service": "stock-analyst",
+            "model_loaded": model is not None
+        }
+    except Exception as exc:
+        logger.error("Model health check failed", error=type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Model health check failed") from exc

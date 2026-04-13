@@ -1,62 +1,83 @@
-"""main entry point for the FastAPI application."""
+"""Main entry point for the FastAPI application."""
 
 import os
-import uvicorn
+from dotenv import load_dotenv
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from fastapi.exceptions import RequestValidationError
-from fastapi import FastAPI
+import uvicorn
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 
+from system.utility.logger import register_http_logging
+from system.agents.finance_agent.agent import root_agent
 
-# FASTAPI logging utility
-from .system.utility.logger import register_http_logging
-from .system.agents.finance_agent.agent import root_agent
+# prepare environment
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+# Configuration
+APP_NAME = os.getenv("APP_NAME")
+USER_ID = os.getenv("USER_ID")
+SESSION_ID = os.getenv("SESSION_ID")
+HOST = os.getenv("HOST")
+PORT = int(os.getenv("PORT", 8000))
 
 
-# Configuration (read from environment with sensible defaults)
-APP_NAME = os.getenv("APP_NAME", "stock-analyst")
-USER_ID = os.getenv("USER_ID", "default_user")
-SESSION_ID = os.getenv("SESSION_ID", "default_session")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """FastAPI lifespan context manager for startup/shutdown."""
+    # Startup
+    try:
+        session_service = InMemorySessionService()
+        await session_service.create_session(
+            app_name=APP_NAME,
+            user_id=USER_ID,
+            session_id=SESSION_ID,
+        )
+        agent_instance = root_agent()
+        runner = Runner(
+            agent=agent_instance,
+            app_name=APP_NAME,
+            session_service=session_service,
+        )
+
+        app.state.session_service = session_service
+        app.state.runner = runner
+        logger.info("Application startup completed successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize application: {e}", exc_info=True)
+        raise
+
+    yield
+
+    # Shutdown (cleanup if needed)
+    logger.info("Application shutdown")
 
 
 def create_app() -> FastAPI:
-    """Create and configure the FastAPI app and attach runner to app.state."""
-    app = FastAPI()
+    """Create and configure the FastAPI app."""
+    app = FastAPI(title=APP_NAME, lifespan=lifespan)
     register_http_logging(app)
 
-    # session service and runner will be created on startup
-    app.state._session_service = InMemorySessionService()
-    app.state._root_agent_factory = root_agent
-    app.state.user_id = USER_ID
-    app.state.session_id = SESSION_ID
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint."""
+        return {"status": "ok"}
 
-    # include routes (router will read runner from app.state at request time)
-    from .Interface.routes import router
-    app.include_router(router, prefix="/v1")
-
-    @app.on_event("startup")
-    async def startup_event():
-        # create a session and runner on startup
-        await app.state._session_service.create_session(
-            app_name=APP_NAME,
-            user_id=app.state.user_id,
-            session_id=app.state.session_id,
-        )
-        # instantiate the runner with an agent instance
-        agent_instance = app.state._root_agent_factory()
-        app.state.runner = Runner(
-            agent=agent_instance,
-            app_name=APP_NAME,
-            session_service=app.state._session_service,
-        )
-
-    # redirects users to documentation
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request, exc):
-        'outputs amessage to redirect users to documentation'
-        msg = "input validation error: see documentation at http:/127.0.0.0.0:8000/docs"
+        """Handle validation errors with helpful message."""
+        msg = f"Input validation error: see documentation at http://{HOST}:{PORT}/docs"
         return PlainTextResponse(msg, status_code=422)
+
+    # Include API routes
+    from Interface.routes import router
+    app.include_router(router, prefix="/v1")
+
     return app
 
 
@@ -64,4 +85,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=int(os.getenv("PORT", 8501)))
+    uvicorn.run(app, host=HOST, port=PORT)

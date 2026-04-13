@@ -3,33 +3,40 @@ Defines and validates the input schema for the /agent endpoint
 and the output schema for the agent's response
 """
 
-from pydantic import BaseModel, Field, model_validator
-from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, Field, field_validator, model_validator
+# from fastapi.exceptions import RequestValidationError
 
 
 class UserInputSchema(BaseModel):
-    """enforces input requirements for the /agent endpoint"""
-    ticker: str = Field(..., min_length=3, max_length= 6)
+    """Enforces input requirements for the /agent endpoint"""
+    ticker: str = Field(
+        ...,
+        min_length=1,
+        max_length=6,
+        description="Stock ticker symbol (alphabetical characters only)"
+    )
 
-    # Standardizing inputted tickers
-    @model_validator(mode='before')
+    # standardize tickers
+    @field_validator('ticker', mode='before')
     def normalize_ticker(self):
-        """Standardize inputted tickers to uppercase"""
-        # Ensure ticker is uppercase before other validations
+        """Standardize ticker to uppercase"""
+        if not isinstance(self.ticker, str):
+            raise ValueError('Ticker must be in letters')
         self.ticker = self.ticker.upper()
         return self
 
-    # preventing entry of wrong data type into ticker field
-    @model_validator(mode='after')  # tells to run post-default validations
-    def validate_after(self):
-        """validate user input after default validation"""
-        if not isinstance(self.ticker, str) or not self.ticker.isalpha():
-            raise RequestValidationError(
-                'inputted tickers must be alphabetical only'
-            )
+    # enforce only alphabetic inputs
+    @model_validator(mode='after')
+    def validate_alphabetical(self):
+        """Ensure ticker contains only alphabetical characters"""
+        if not self.ticker.isalpha():
+            raise ValueError(
+                'Ticker must contain only alphabetical characters'
+                )
         return self
 
-
 class AgentOutputSchema(BaseModel):
-    """schema for agent output"""
-    final_summary: str
+    """Schema for agent response"""
+    final_summary: str = Field(..., description="Summary of stock analysis")
+    status: str = Field(default="success", description="Response status")
+    timestamp: str = Field(..., description="Timestamp of analysis")
