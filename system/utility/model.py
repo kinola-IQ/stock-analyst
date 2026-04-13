@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 
 from .custom_exceptions import ModelLoadError
-from .utils import retry_with_exponential_backoff
+from .utils import retry_on_exception
 from .logger import logger
 
 load_dotenv()
@@ -37,8 +37,8 @@ def _configure_genai() -> None:
     _CONFIGURED = True
 
 # model intialization with retry logic
-@retry_with_exponential_backoff(retries=3, backoff_in_seconds=2)
-def get_model():
+@retry_on_exception()
+def load_model():
     """Create and cache the Gemini model instance."""
     global MODEL
 
@@ -53,8 +53,9 @@ def get_model():
         logger.exception("Model loading failed")
         raise ModelLoadError(f"Model loading failed: {exc}") from exc
 
+
 # model serving function
-def load_model():
+def get_model():
     """Return the cached model instance, or raise if it has not been loaded."""
     if MODEL is None:
         raise ModelLoadError("Model has not been loaded yet. Call get_model() first.")

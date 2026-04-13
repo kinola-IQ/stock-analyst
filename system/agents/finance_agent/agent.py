@@ -16,7 +16,7 @@ from ..finance_agent.tools import (
 from ...utility.utils import retry_config
 
 # model serving
-from ...utility.model import load_model
+from ...utility.model import get_model
 
 def root_agent() -> LlmAgent:
     """Return a root LLM agent that coordinates the research workflow."""
@@ -38,7 +38,7 @@ def root_agent() -> LlmAgent:
 
     return LlmAgent(
         name="ResearchCoordinator",
-        model=load_model(),
+        model=get_model(),
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
         tools=[AgentTool(research_agent()), log_tool, analyse_ticker, save_summary],

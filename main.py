@@ -13,7 +13,7 @@ from google.adk.sessions import InMemorySessionService
 
 from system.utility.logger import register_http_logging
 from system.agents.finance_agent.agent import root_agent
-
+from system.utility.model import load_model
 # prepare environment
 load_dotenv()
 
@@ -32,6 +32,10 @@ async def lifespan(app: FastAPI):
     """FastAPI lifespan context manager for startup/shutdown."""
     # Startup
     try:
+        # making model available on startup
+        await asyncio.to_thread(load_model)
+        logger.info('model loaded successfully')
+
         session_service = InMemorySessionService()
         await session_service.create_session(
             app_name=APP_NAME,

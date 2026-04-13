@@ -1,7 +1,6 @@
 # Stock Analyst
 
 A FastAPI application that leverages Google's Agent Development Kit (ADK) to run a multi-agent research workflow for comprehensive stock analysis. The system coordinates research, financial data analysis, and sentiment scoring to produce actionable buy/sell/hold recommendations.
-
 ## Features
 
 - **Multi-agent system**: Research Coordinator agent orchestrates specialized sub-agents (ResearchAgent)

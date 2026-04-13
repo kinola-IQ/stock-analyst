@@ -10,7 +10,7 @@ from google.genai import types
 # custom modules
 from ..system.utility.schema import UserInputSchema, AgentOutputSchema
 from ..system.utility.logger import logger
-from ..system.utility.model import load_model
+from ..system.utility.model import get_model
 router = APIRouter()
 
 
@@ -100,11 +100,12 @@ async def health_check(request: Request) -> dict:
         logger.error("Health check failed", error=type(exc).__name__)
         raise HTTPException(status_code=503, detail="Service health check failed") from exc
 
+
 @router.get("/health_model")
 def health_check_model() -> dict:
     """Health check endpoint for model."""
     try:
-        model = load_model()
+        model = get_model()
         return {
             "status": "healthy",
             "service": "stock-analyst",
