@@ -1,26 +1,28 @@
 # Stock Analyst
 
-A FastAPI application that runs a finance analysis agent to analyze stock tickers using a streaming agent runner and various data tools (yfinance, Pinecone, sentiment analysis, etc.).
-
-![Design Plan](Originial%20Design%20Plan.png)
+A FastAPI application that leverages Google's Agent Development Kit (ADK) to run a multi-agent research workflow for comprehensive stock analysis. The system coordinates research, financial data analysis, and sentiment scoring to produce actionable buy/sell/hold recommendations.
 
 ## Features
 
-- AI-powered stock analysis with buy/sell/hold recommendations
-- Real-time financial data extraction from yfinance
-- Sentiment analysis of news headlines
-- Vector database integration with Pinecone
-- Structured logging and monitoring
-- API key authentication
-- Comprehensive test suite
+- **Multi-agent system**: Research Coordinator agent orchestrates specialized sub-agents (ResearchAgent)
+- **AI-powered analysis**: Google Gemini model with structured financial reasoning
+- **Real-time financial data**: yfinance integration for stock prices, metrics, and historical data
+- **Sentiment analysis**: VADER sentiment scoring on financial news headlines
+- **Web research**: Google Search integration for company research
+- **Structured output**: Buy/sell/hold verdicts with detailed metrics and reasoning
+- **API key authentication**: Secure endpoint access with X-API-Key headers
+- **Streaming responses**: Real-time event streaming from agent execution
+- **Comprehensive test suite**: Unit tests for tools, routes, and utilities
+- **Structured logging**: Request/response tracking and error diagnostics
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.10+
 - pip
-- Ollama (for local LLM)
-- API keys for external services
+- Google Gemini API key (for LLM inference)
+- Google Search API credentials
+- (Optional) Pinecone API key for vector storage
 
 ### Installation
 
@@ -43,14 +45,11 @@ pip install -r requirements.txt
 
 4. Set up environment variables (see Configuration section)
 
-5. Start Ollama and pull the model:
+5. Run the application:
 ```bash
-ollama pull qwen3:4b
-```
-
-6. Run the application:
-```bash
-uvicorn main:app --host 127.0.0.1 --port 8501
+python main.py
+# or
+uvicorn main:app --host 0.0.0.0 --port 8501
 ```
 
 ## Configuration
@@ -61,17 +60,19 @@ Create a `.env` file in the root directory with the following variables:
 # API Configuration
 API_KEY=your-secret-api-key-here
 
-# External Service Keys
-PINECONE_API_KEY=your-pinecone-key
-GOOGLE_GENAI_API_KEY=your-google-genai-key
+# Google Services (Required)
+GOOGLE_GENAI_API_KEY=your-google-gemini-api-key
+GOOGLE_ADK_API_KEY=your-google-adk-api-key
 
 # Application Settings
 APP_NAME=stock-analyst
 USER_ID=default-user
 SESSION_ID=default-session
+HOST=0.0.0.0
 PORT=8501
 
-# Optional: Pinecone Configuration
+# Optional: External Services
+PINECONE_API_KEY=your-pinecone-key
 PINECONE_INDEX_NAME=stock-analysis
 ```
 
@@ -89,8 +90,9 @@ curl -X POST http://127.0.0.1:8501/v1/analyze-stock/ \
 
 ### Endpoints
 
-- `POST /v1/analyze-stock/` - Analyze a stock ticker
-- `GET /v1/health` - Health check
+- `POST /v1/analyze-stock/` - Analyze a stock ticker (requires X-API-Key header)
+- `GET /health` - Basic health check
+- `GET /v1/health_runner` - Runner service health check
 
 ### Request/Response Format
 
@@ -104,7 +106,9 @@ curl -X POST http://127.0.0.1:8501/v1/analyze-stock/ \
 **Response:**
 ```json
 {
-  "final_summary": "BUY: Apple Inc. shows strong financials with positive sentiment..."
+  "final_summary": "BUY: Apple Inc. demonstrates strong financial fundamentals with positive market sentiment. Key metrics show...",
+  "status": "success",
+  "timestamp": "2024-04-13T10:30:45.123456"
 }
 ```
 
@@ -124,9 +128,11 @@ pytest tests/
 Build and run with Docker:
 
 ```bash
-docker build -t stock-analyst .
-docker run -p 8501:8501 --env-file .env stock-analyst
+docker build -t stock-analyst:latest .
+docker run -p 8501:8501 --env-file .env stock-analyst:latest
 ```
+
+The Docker image uses a multi-stage build (Python 3.11-slim) and runs as a non-root user for security.
 
 ### Production Deployment
 
@@ -146,51 +152,66 @@ gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8501
 
 ```
 stock-analyst/
-├── main.py                 # FastAPI application entry point
+├── main.py                 # FastAPI app with ADK runner initialization
 ├── requirements.txt        # Python dependencies
-├── Dockerfile             # Docker configuration
-├── tests/                 # Test suite
-│   ├── test_ticker_tools.py
-│   ├── test_tools.py
-│   └── test_routes.py
+├── Dockerfile             # Multi-stage Docker build (Python 3.11-slim)
+├── docker-entrypoint.sh   # Container startup script
+├── tests/                 # Unit and integration tests
+│   ├── test_ticker_tools.py    # yfinance & financial metrics tests
+│   ├── test_tools.py           # Agent tool tests
+│   ├── test_routes.py          # API endpoint tests
+│   ├── test_utils.py           # Utility function tests
+│   └── test_result_storage.py  # Storage layer tests
 ├── Interface/
-│   └── routes.py          # API routes and endpoints
+│   └── routes.py          # FastAPI routes with API key verification
 ├── system/
 │   ├── agents/
 │   │   └── finance_agent/
-│   │       ├── agent.py   # Agent implementation
-│   │       ├── tools.py   # Agent tools
+│   │       ├── agent.py              # Root ResearchCoordinator agent
+│   │       ├── tools.py              # Agent tool definitions (research, analysis)
 │   │       └── tools_config/
-│   │           └── ticker_tools.py  # Financial analysis tools
+│   │           └── ticker_tools.py   # Financial pipeline (fetch → analyze → decide)
 │   └── utility/
-│       ├── logger.py      # Logging utilities
-│       ├── schema.py      # Pydantic schemas
-│       ├── result_storage.py  # In-memory storage
-│       ├── utils.py       # Helper functions
-│       └── test_*.py      # Unit tests
+│       ├── logger.py           # Structured logging configuration
+│       ├── schema.py           # Pydantic request/response schemas
+│       ├── result_storage.py   # In-memory session storage
+│       ├── utils.py            # Retry logic and helpers
+│       ├── model.py            # Gemini model loader
+│       └── custom_exceptions.py # Custom exception types
 └── notebook/
-    └── pinecone_index.ipynb  # Jupyter notebook for experimentation
+    ├── initial system audit report.ipynb  # System diagnostics
+    └── pinecone_index.ipynb              # Vector DB experimentation
 ```
 
 ## Development
 
 ### Running Tests
 ```bash
-pytest tests/ -v
+pytest tests/ -v              # Run all tests with verbose output
+pytest tests/ -k ticker_tools # Run specific test module
+pytest tests/ --cov          # Generate coverage report
 ```
 
 ### Code Quality
 ```bash
 pip install black flake8
-black .
-flake8 .
+black .           # Format code
+flake8 .          # Lint code
 ```
 
 ### Adding New Features
-1. Add business logic to appropriate module in `system/`
-2. Update API routes in `Interface/routes.py`
-3. Add tests in `tests/`
-4. Update documentation
+1. **New ticker analysis tools**: Add functions to `system/agents/finance_agent/tools_config/ticker_tools.py`
+2. **New agent tools**: Add tool definitions to `system/agents/finance_agent/tools.py` and wrap with `AgentTool` in `agent.py`
+3. **New API endpoints**: Extend `Interface/routes.py` with FastAPI route decorators
+4. **Tests**: Add corresponding test files in `tests/` directory following existing patterns
+5. **Documentation**: Update this README and add docstrings to new functions
+
+### Understanding the Agent Workflow
+The root agent (`ResearchCoordinator`) orchestrates the following workflow:
+1. **Research Phase**: Uses ResearchAgent with Google Search to find company information and news
+2. **Analysis Phase**: Uses `analyse_ticker()` to compute financial metrics and sentiment scores
+3. **Decision Phase**: Generates buy/sell/hold recommendation based on metrics and sentiment
+4. **Logging**: Records key decisions and milestones for traceability
 
 ## Monitoring
 
@@ -213,8 +234,25 @@ Logs are output to stdout/stderr for containerized deployments.
 ## License
 
 [Add license information here]
-- The project references Google ADK (`google.adk` imports) and the `google-genai` client; ensure appropriate credentials and API access are configured for agent execution.
-- Pinecone and other external services are listed in `requirements.txt` — configure keys/secrets in environment variables or a secrets manager before running agent features that depend on them.
+
+## Important Notes
+
+### External Service Dependencies
+- **Google Gemini API**: Required for LLM inference. Obtain API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **Google Agent Development Kit (ADK)**: Provides the agent runtime and streaming capabilities. Requires valid Google Cloud credentials.
+- **yfinance**: Free financial data source; no API key required
+- **VADER Sentiment**: NLTK-based sentiment analysis; downloads lexicon on first use
+- **Pinecone** (optional): For vector-based semantic search; configure only if needed
+
+### Performance & Constraints
+- Stock analysis typically completes in 10-30 seconds depending on agent reasoning depth
+- Streaming responses allow real-time event monitoring during analysis
+- API rate limits apply to Google services; configure retry logic as needed
+
+### Security
+- API key required in `X-API-Key` header for all `/v1/*` endpoints
+- Docker container runs as non-root user for security
+- Keep `.env` file secure; never commit to version control
 
 **Examples**
 - **cURL:**
@@ -265,26 +303,38 @@ asyncio.run(main())
 ```
 
 **Environment (.env) template**
-- Example variables to place in a `.env` file or set in your environment:
-
-```
+```env
+# Core Configuration
 APP_NAME=stock-analyst
 USER_ID=default_user
 SESSION_ID=default_session
+HOST=0.0.0.0
 PORT=8501
-GOOGLE_ADK_API_KEY=your_google_adk_api_key_here
+API_KEY=your-secret-api-key-here
+
+# Google Services (Required)
+GOOGLE_GENAI_API_KEY=your-google-gemini-api-key
+GOOGLE_ADK_API_KEY=your-google-adk-api-key
+
+# Optional Services
 PINECONE_API_KEY=your_pinecone_api_key_here
-PINECONE_ENV=your_pinecone_env_here
+PINECONE_INDEX_NAME=stock-analysis
 ```
 
 **OpenAPI & Swagger**
-- When running the app, FastAPI exposes interactive docs at `/docs` (Swagger UI) and `/redoc` (ReDoc). Use these to inspect the request/response schemas and to try endpoints.
+- When running the app, FastAPI exposes interactive docs at `/docs` (Swagger UI) and `/redoc` (ReDoc)
+- Try the `/v1/analyze-stock/` endpoint directly in the UI
+- Note: Headers tab required for X-API-Key authentication
 
 **Running tests**
-- Install test dependencies and run:
-
 ```bash
-pip install pytest
-pytest -q
+pip install pytest pytest-mock pytest-asyncio
+pytest tests/ -v
 ```
+
+**Troubleshooting**
+- If you see "Runner is not initialized": Ensure app startup completed without errors. Check logs for credential issues.
+- If sentiment analysis fails: VADER will auto-download NLTK data on first use (requires internet connection)
+- If Google Search fails: Verify GOOGLE_GENAI_API_KEY is valid and has Search API enabled
+- If agent hangs: Check OpenAI/Google rate limits; implement backoff in utils.py
 
