@@ -45,6 +45,10 @@ USER appuser
 
 EXPOSE 8501
 ENV PYTHONUNBUFFERED=1
+ENV APP_NAME=stock-analyst
+ENV USER_ID=default-user
+ENV SESSION_ID=default-session
+ENV HOST=127.0.0.1
 ENV PORT=8501
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8501", "--loop", "uvloop", "--workers", "1"]
