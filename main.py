@@ -1,9 +1,9 @@
 """Main entry point for the FastAPI application."""
 
 import os
-from dotenv import load_dotenv
 import logging
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from fastapi.exceptions import RequestValidationError
@@ -14,6 +14,7 @@ from google.adk.sessions import InMemorySessionService
 from system.utility.logger import register_http_logging
 from system.agents.finance_agent.agent import root_agent
 from system.utility.model import load_model
+from Interface.routes import router
 # prepare environment
 load_dotenv()
 
@@ -58,7 +59,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown (cleanup if needed)
+    # Shutdown
     logger.info("Application shutdown")
 
 
@@ -79,7 +80,6 @@ def create_app() -> FastAPI:
         return PlainTextResponse(msg, status_code=422)
 
     # Include API routes
-    from Interface.routes import router
     app.include_router(router, prefix="/v1")
 
     return app

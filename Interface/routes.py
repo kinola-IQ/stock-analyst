@@ -8,9 +8,9 @@ from fastapi import HTTPException, APIRouter, Request, Depends, Header
 from google.genai import types
 
 # custom modules
-from ..system.utility.schema import UserInputSchema, AgentOutputSchema
-from ..system.utility.logger import logger
-from ..system.utility.model import get_model
+from system.utility.schema import UserInputSchema, AgentOutputSchema
+from system.utility.logger import logger
+from system.utility.model import get_model
 router = APIRouter()
 
 
