@@ -1,7 +1,7 @@
 """Main entry point for the FastAPI application."""
 
 import os
-import logging
+import asyncio
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -11,21 +11,19 @@ import uvicorn
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 
-from system.utility.logger import register_http_logging
+from system.utility.logger import register_http_logging, logger
 from system.agents.finance_agent.agent import root_agent
 from system.utility.model import load_model
 from Interface.routes import router
 # prepare environment
 load_dotenv()
 
-logger = logging.getLogger(__name__)
-
 # Configuration
 APP_NAME = os.getenv("APP_NAME")
 USER_ID = os.getenv("USER_ID")
 SESSION_ID = os.getenv("SESSION_ID")
 HOST = os.getenv("HOST")
-PORT = int(os.getenv("PORT", 8000))
+PORT = os.getenv("PORT")
 
 
 @asynccontextmanager
@@ -33,9 +31,9 @@ async def lifespan(app: FastAPI):
     """FastAPI lifespan context manager for startup/shutdown."""
     # Startup
     try:
-        # making model available on startup
-        await asyncio.to_thread(load_model)
-        logger.info('model loaded successfully')
+        # making model name available on startup
+        await load_model()
+        logger.info('google genai client available for use')
 
         session_service = InMemorySessionService()
         await session_service.create_session(
@@ -52,14 +50,15 @@ async def lifespan(app: FastAPI):
 
         app.state.session_service = session_service
         app.state.runner = runner
+        app.state.user_id = USER_ID or "default_user"
+        app.state.session_id = SESSION_ID or "default_session"
         logger.info("Application startup completed successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize application: {e}", exc_info=True)
+    except Exception as err:
+        logger.error(f"Failed to initialize application: {err}", exc_info=True)
         raise
 
     yield
 
-    # Shutdown
     logger.info("Application shutdown")
 
 
@@ -71,7 +70,9 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Health check endpoint."""
-        return {"status": "ok"}
+        return {
+            "status": "ok",
+            "message": "Fastapi app created and configured"}
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request, exc):

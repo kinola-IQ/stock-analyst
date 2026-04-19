@@ -21,7 +21,7 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
         logger.error("API key not configured in environment")
         raise HTTPException(status_code=500, detail="Service configuration error")
     if x_api_key != expected_key:
-        logger.warning("Invalid API key attempt", provided_key_length=len(x_api_key))
+        logger.warning("Invalid API key attempt", extra={"provided_key_length": len(x_api_key)})
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
@@ -37,26 +37,27 @@ async def analyze_stock(ticker: UserInputSchema, request: Request, api_key: str 
         raise HTTPException(status_code=400, detail="Ticker symbol cannot be empty")
     
     ticker_symbol = ticker.ticker.strip().upper()
-    logger.info("Starting stock analysis", ticker=ticker_symbol, user_id=request.app.state.user_id)
+    
+    # retrieve runner and session info from app state
+    runner = getattr(request.app.state, "runner", None)
+    if runner is None:
+        raise RuntimeError(
+            "Runner is not initialized; ensure the app startup "
+            "completed successfully."
+        )
+
+    user_id = getattr(
+        request.app.state, "user_id", os.getenv("USER_ID", "default_user")
+    )
+    session_id = getattr(
+        request.app.state,
+        "session_id",
+        os.getenv("SESSION_ID", "default_session"),
+    )
+    
+    logger.info("Starting stock analysis", extra={"ticker": ticker_symbol, "user_id": user_id})
     try:
-        logger.debug("Analyzing ticker", ticker=ticker_symbol)
-
-        # retrieve runner and session info from app state
-        runner = getattr(request.app.state, "runner", None)
-        if runner is None:
-            raise RuntimeError(
-                "Runner is not initialized; ensure the app startup "
-                "completed successfully."
-            )
-
-        user_id = getattr(
-            request.app.state, "user_id", os.getenv("USER_ID", "default_user")
-        )
-        session_id = getattr(
-            request.app.state,
-            "session_id",
-            os.getenv("SESSION_ID", "default_session"),
-        )
+        logger.debug("Analyzing ticker", extra={"ticker": ticker_symbol})
 
         # Package the user's query into ADK format
         content = types.Content(
@@ -68,17 +69,16 @@ async def analyze_stock(ticker: UserInputSchema, request: Request, api_key: str 
         async for event in runner.run_async(
             user_id=user_id, session_id=session_id, new_message=content
         ):
-           
            # save final response when agent signals completion
             if event.is_final_response():
                 if event.content and event.content.parts:
                     final_response_text = event.content.parts[0].text
                 break
 
-        logger.info("Stock analysis completed", ticker=ticker_symbol, verdict=final_response_text[:50])
-        return AgentOutputSchema(final_summary=final_response_text, timestamp = datetime.now())
+        logger.info("Stock analysis completed", extra={"ticker": ticker_symbol, "verdict": final_response_text[:50]})
+        return AgentOutputSchema(final_summary=final_response_text, timestamp=datetime.now().isoformat())
     except Exception as exc:
-        logger.error("Stock analysis failed", ticker=ticker_symbol, error=type(exc).__name__)
+        logger.error("Stock analysis failed", extra={"ticker": ticker_symbol, "error": type(exc).__name__})
         raise HTTPException(status_code=500, detail="Stock analysis failed. Please try again.") from exc
 
 
@@ -97,7 +97,7 @@ async def health_check(request: Request) -> dict:
             "runner_initialized": runner is not None
         }
     except Exception as exc:
-        logger.error("Health check failed", error=type(exc).__name__)
+        logger.error("Health check failed", extra={"error": type(exc).__name__})
         raise HTTPException(status_code=503, detail="Service health check failed") from exc
 
 
@@ -112,5 +112,5 @@ def health_check_model() -> dict:
             "model_loaded": model is not None
         }
     except Exception as exc:
-        logger.error("Model health check failed", error=type(exc).__name__)
+        logger.error("Model health check failed", extra={"error": type(exc).__name__})
         raise HTTPException(status_code=503, detail="Model health check failed") from exc

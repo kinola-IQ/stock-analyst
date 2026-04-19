@@ -52,14 +52,14 @@ class ResultStorage:
         """Save a new result to memory (creates an instance)."""
         try:
             if not isinstance(content, dict):
-                logger.error("Invalid content type: must be a dict", type=type(content).__name__)
+                logger.error("Invalid content type: must be a dict", extra={"type": type(content).__name__})
                 return
             cls(content)
-            logger.debug("Result saved successfully", keys=list(content.keys()))
+            logger.debug("Result saved successfully", extra={"keys": list(content.keys())})
         except TypeError as err:
-            logger.error("Save failed: invalid content structure", error=str(err))
+            logger.error("Save failed: invalid content structure", extra={"error": str(err)})
         except Exception as err:
-            logger.error("Save failed with unexpected error", error=type(err).__name__)
+            logger.error("Save failed with unexpected error", extra={"error": type(err).__name__})
 
     def _extract_attributes(self) -> None:
         """Extract attributes from self.content, supporting multiple schemas."""
@@ -82,9 +82,9 @@ class ResultStorage:
             if fr is not None:
                 self.final_report = str(fr)
             
-            logger.debug("Attributes extracted", has_ticker=self.ticker is not None, has_response=self.response is not None)
+            logger.debug("Attributes extracted", extra={"has_ticker": self.ticker is not None, "has_response": self.response is not None})
         except Exception as err:
-            logger.error("Failed to extract attributes", error=type(err).__name__)
+            logger.error("Failed to extract attributes", extra={"error": type(err).__name__})
 
     # Convenience helpers
 

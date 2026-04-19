@@ -1,0 +1,29 @@
+2026-04-18 12:28:26,383 - INFO - model loaded successfully
+2026-04-18 12:28:26,384 - INFO - Application startup completed successfully
+2026-04-18 12:30:27,358 - INFO - Application shutdown
+2026-04-18 12:33:09,829 - INFO - api connection configured successfully
+2026-04-18 12:33:09,829 - INFO - Model 'gemini-1.5-flash' loaded and cached successfully
+2026-04-18 12:33:09,829 - INFO - model loaded successfully
+2026-04-18 12:33:09,830 - INFO - Application startup completed successfully
+2026-04-18 12:35:51,626 - INFO - Application shutdown
+2026-04-18 12:36:11,703 - INFO - api connection configured successfully
+2026-04-18 12:36:11,703 - INFO - Model 'gemini-1.5-flash' loaded and cached successfully
+2026-04-18 12:36:11,703 - INFO - google genai client available for use
+2026-04-18 12:36:11,704 - INFO - Application startup completed successfully
+2026-04-18 12:36:52,855 - INFO - GET /docs 200 completed in 0.001s
+2026-04-18 12:36:54,618 - INFO - GET /openapi.json 200 completed in 0.024s
+2026-04-18 12:36:59,696 - INFO - GET /health 200 completed in 0.001s
+2026-04-18 12:37:15,701 - INFO - GET /v1/health_runner 200 completed in 0.002s
+2026-04-18 12:37:24,748 - INFO - GET /v1/health_model 200 completed in 0.004s
+2026-04-18 12:37:54,144 - INFO - Starting stock analysis
+2026-04-18 12:37:54,164 - ERROR - Stock analysis failed
+2026-04-18 12:37:54,164 - INFO - POST /v1/analyze-stock/ 500 completed in 0.024s
+2026-04-18 12:37:54,165 - ERROR - Task exception was never retrieved
+future: <Task finished name='Task-20' coro=<BaseApiClient.aclose() done, defined at c:\Users\Omolayo-Akinola\Documents\projects\engineering\stock analyst\.venv\Lib\site-packages\google\genai\_api_client.py:2100> exception=AttributeError("'BaseApiClient' object has no attribute '_async_httpx_client'")>
+Traceback (most recent call last):
+  File "c:\Users\Omolayo-Akinola\Documents\projects\engineering\stock analyst\.venv\Lib\site-packages\google\genai\_api_client.py", line 2105, in aclose
+    await self._async_httpx_client.aclose()  # type: ignore[union-attr]
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'BaseApiClient' object has no attribute '_async_httpx_client'
+2026-04-18 15:53:54,937 - INFO - GET /docs 200 completed in 0.001s
+2026-04-18 15:53:55,953 - INFO - GET /openapi.json 200 completed in 0.001s

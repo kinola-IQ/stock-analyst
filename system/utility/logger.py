@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 # Create a rotating file handler
 handler = RotatingFileHandler(
     "app.log",        # log file name
-    maxBytes=2000,    # rotate after ~2KB
+    maxBytes=10000,    # rotate after ~10KB
     backupCount=5     # keep 5 old log files
 )
 
@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 
 # instantiating logger
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 
 # keep track of responsiveness across endpoints

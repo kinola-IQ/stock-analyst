@@ -3,8 +3,11 @@ Defines and validates the input schema for the /agent endpoint
 and the output schema for the agent's response
 """
 
+import logging
 from pydantic import BaseModel, Field, field_validator, model_validator
 # from fastapi.exceptions import RequestValidationError
+
+logger = logging.getLogger(__name__)
 
 
 class UserInputSchema(BaseModel):
@@ -18,12 +21,12 @@ class UserInputSchema(BaseModel):
 
     # standardize tickers
     @field_validator('ticker', mode='before')
-    def normalize_ticker(self):
+    def normalize_ticker(cls, ticker):
         """Standardize ticker to uppercase"""
-        if not isinstance(self.ticker, str):
+        if not isinstance(ticker, str):
+            logger.info('Ticker must be in letters')
             raise ValueError('Ticker must be in letters')
-        self.ticker = self.ticker.upper()
-        return self
+        return ticker.upper()
 
     # enforce only alphabetic inputs
     @model_validator(mode='after')

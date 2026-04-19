@@ -2,8 +2,7 @@
 
 # from google.adk.code_executors import BuiltInCodeExecutor
 from google.adk.agents import LlmAgent
-from google.adk.models.google_llm import Gemini
-from google.adk.tools import AgentTool
+from google.adk.tools import AgentTool, FunctionTool
 
 
 # custom modules
@@ -41,6 +40,6 @@ def root_agent() -> LlmAgent:
         model=get_model(),
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
-        tools=[AgentTool(research_agent()), log_tool, analyse_ticker, save_summary],
+        tools=[AgentTool(research_agent()), FunctionTool(log_tool), FunctionTool(analyse_ticker), FunctionTool(save_summary)],
         output_key="final_summary",
     )
