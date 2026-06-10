@@ -1,61 +1,62 @@
-"""
-Load and cache the Gemini model, with basic validation and retry support.
-"""
+"""Gemini model initialization and caching with API setup."""
 
 import os
-import contextlib
-from dotenv import load_dotenv
 import google.genai as genai
-
+from dotenv import load_dotenv
 from .custom_exceptions import ModelLoadError
-from .utils import retry_on_exception
+from .utils import retry_on_exception, get_env
 from .logger import logger
 
-# preparing access to api key from environment
 load_dotenv()
 
-# global variable to cache the model name after loading
-MODEL = None
+# Global state
+_MODEL = None
+_CLIENT = None
 _CONFIGURED = False
 
 
-# Handle Generative AI client connection
-@retry_on_exception()
-async def get_genai_client():
-    """Context manager for Generative AI client."""
-    global _CONFIGURED, MODEL
-    api_key = os.getenv("GOOGLE_GENAI_API_KEY")
+def _configure_genai_client():
+    """Initialize the GenAI client with API key."""
+    global _CONFIGURED, _CLIENT
+    if _CONFIGURED:
+        return
+    
+    api_key = get_env("GOOGLE_API_KEY")
     if not api_key:
-        raise ModelLoadError("GOOGLE_GENAI_API_KEY is missing")
-
+        raise ModelLoadError("GOOGLE_API_KEY is missing or empty")
+    
     try:
-        genai.Client(api_key=api_key)
+        _CLIENT = genai.Client(api_key=api_key)
         _CONFIGURED = True
-        logger.info("api connection configured successfully")
-        return _CONFIGURED
-    except Exception as exc:
-        logger.exception("api connection configuration failed")
+        logger.info("GenAI client initialized successfully")
+    except Exception as e:
+        logger.error(f"GenAI client initialization failed: {e}")
+        raise ModelLoadError(f"GenAI client initialization failed: {e}") from e
 
 
-# model intialization with retry logic
-async def load_model(model_name: str = "gemini-1.5-flash") -> str:
-    """connect to api and cache name of model to use on startup"""
+@retry_on_exception(max_attempts=3, delay=1.0)
+async def load_model(model_name: str = "gemini-2.5-pro") -> str:
+    """Load and cache the model name on startup."""
+    global _MODEL
     try:
-        global MODEL
-        await get_genai_client()
-        MODEL = model_name
-        logger.info(f"Model '{MODEL}' loaded and cached successfully")
-        return MODEL
-    except Exception as exc:
-        logger.exception("Model loading failed")
-        raise ModelLoadError(f"Model loading failed: {exc}") from exc
+        # _configure_genai_client()
+        _MODEL = model_name
+        logger.info(f"Model '{_MODEL}' loaded successfully")
+        return _MODEL
+    except Exception as e:
+        logger.error(f"Model loading failed: {e}")
+        raise ModelLoadError(f"Model loading failed: {e}") from e
 
 
-# model serving function
 def get_model() -> str:
-    """Return the cached model name, or raise if api connection has not been made."""
-    if MODEL is None:
-        raise ModelLoadError(
-            "api connection not made, and so Model name cannot be cached yet."
-            )
-    return MODEL
+    """Return the cached model name, or raise if not loaded."""
+    if _MODEL is None:
+        raise ModelLoadError("Model not loaded; call load_model() during startup")
+    return _MODEL
+
+
+def get_client():
+    """Return the GenAI client, or raise if not initialized."""
+    if _CLIENT is None:
+        raise ModelLoadError("GenAI client not initialized; call load_model() during startup")
+    return _CLIENT

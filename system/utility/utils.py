@@ -1,28 +1,31 @@
 """Utility helpers for the project.
 
-Includes functions to build retry configuration for Google GenAI HTTP requests.
+Includes functions to build retry configuration and environment variable handling.
 """
 
+import os
 import time
 from functools import wraps
 from typing import Callable, Any
 from google.genai import types
 
 
-# retry configurable
+def get_env(name: str, default: str = "") -> str:
+    """Get environment variable with sanitization (strip quotes and whitespace)."""
+    value = os.getenv(name, default)
+    return value.strip().strip("'\"") if value else default
+
+
 def retry_config():
     """Return retry configuration for transient HTTP errors.
 
-    This is useful for handling rate limits and temporary service
-    unavailability. Common retriable status codes include
-    429, 500, 503, and 504.
+    Handles rate limits and temporary service unavailability.
     """
-
     return types.HttpRetryOptions(
-        attempts=5,  # Maximum retry attempts
-        exp_base=7,  # Delay multiplier
+        attempts=5,
+        exp_base=7,
         initial_delay=1,
-        http_status_codes=[429, 500, 503, 504],  # Retry on these HTTP errors
+        http_status_codes=[429, 500, 503, 504],
     )
 
 

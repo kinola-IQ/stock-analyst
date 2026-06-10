@@ -1,13 +1,4 @@
-"""
-ticker_tools.py
-
-Separated functions for:
-1) fetching company data via yfinance
-2) extracting financial metrics
-3) scoring news sentiment
-4) generating a Python analysis script string
-5) running a lightweight rule-based decision (buy/sell/hold)
-"""
+"""Tools for stock analysis: fetch data, extract metrics, score sentiment, and decide buy/sell/hold."""
 
 from typing import Dict, Any, List, Optional
 import datetime
@@ -19,97 +10,172 @@ from system.utility.utils import retry_on_exception
 logger = logging.getLogger(__name__)
 
 
-# Lazy imports inside functions to fail gracefully if not installed
+def _safe_get_ticker_attr(ticker, attr: str):
+    """Safely get ticker attribute with error handling."""
+    try:
+        return getattr(ticker, attr) or None
+    except Exception:
+        return None
+
+
+def _parse_news(ticker, top_n: int = 5) -> List[Dict[str, Any]]:
+    """Extract and parse news from ticker."""
+    news = []
+    try:
+        raw_news = ticker.news or []
+        for n in raw_news[:top_n]:
+            if not isinstance(n, dict):
+                continue
+            title = n.get("title") or n.get("headline") or ""
+            if not title:
+                continue
+            try:
+                ts = n.get("providerPublishTime")
+                if ts:
+                    ts = datetime.datetime.fromtimestamp(int(ts)).isoformat()
+            except (ValueError, OSError):
+                ts = None
+            news.append({
+                "title": title,
+                "link": n.get("link", ""),
+                "publisher": n.get("publisher") or n.get("source", ""),
+                "time": ts
+            })
+    except Exception as e:
+        logger.debug(f"News fetch failed: {e}")
+    return news
+
+
+def _get_dataframe_row(df, candidates: List[str]):
+    """Try to get row from DataFrame using candidate names."""
+    if df is None or not hasattr(df, "index"):
+        return None
+    for name in candidates:
+        if name in df.index:
+            return df.loc[name].iloc[0] if len(df.loc[name]) > 0 else None
+    return None
+
+
+def _extract_price_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
+    """Extract price-related metrics."""
+    metrics = {"current_price": None, "trailing_pe": None, "forward_pe": None, "market_cap": None}
+    info = data.get("info", {}) or {}
+    
+    try:
+        hist = data.get("history")
+        if hist is not None and hasattr(hist, "empty") and not hist.empty:
+            metrics["current_price"] = float(hist["Close"].iloc[-1])
+        elif info.get("currentPrice"):
+            metrics["current_price"] = float(info.get("currentPrice"))
+    except Exception:
+        pass
+    
+    metrics["trailing_pe"] = info.get("trailingPE")
+    metrics["forward_pe"] = info.get("forwardPE")
+    metrics["market_cap"] = info.get("marketCap")
+    return metrics
+
+
+def _extract_revenue_metrics(fin) -> Dict[str, Optional[float]]:
+    """Extract revenue-related metrics."""
+    metrics = {"revenue": None, "net_income": None, "revenue_growth_pct": None}
+    if fin is None or not hasattr(fin, "empty") or fin.empty:
+        return metrics
+    
+    try:
+        rev_candidates = ["Total Revenue", "Revenue", "Revenues"]
+        net_candidates = ["Net Income", "Net Income Applicable To Common Shares", "NetIncomeLoss"]
+        
+        rev = _get_dataframe_row(fin, rev_candidates)
+        net = _get_dataframe_row(fin, net_candidates)
+        
+        metrics["revenue"] = float(rev) if rev is not None else None
+        metrics["net_income"] = float(net) if net is not None else None
+        
+        # Revenue growth YoY
+        if fin.shape[1] >= 2:
+            for name in rev_candidates:
+                if name in fin.index:
+                    row = fin.loc[name]
+                    if len(row) >= 2:
+                        rev_new = float(row.iloc[-1]) if row.iloc[-1] is not None else None
+                        rev_old = float(row.iloc[-2]) if row.iloc[-2] is not None else None
+                        if rev_new is not None and rev_old not in (None, 0):
+                            metrics["revenue_growth_pct"] = ((rev_new - rev_old) / abs(rev_old)) * 100.0
+                    break
+    except Exception as e:
+        logger.debug(f"Revenue extraction failed: {e}")
+    
+    return metrics
+
+
+def _extract_debt_metrics(bal) -> Dict[str, Optional[float]]:
+    """Extract debt and equity metrics."""
+    metrics = {"total_debt": None, "total_equity": None, "debt_to_equity": None}
+    if bal is None or not hasattr(bal, "empty") or bal.empty:
+        return metrics
+    
+    try:
+        debt_candidates = ["Long Term Debt", "Total Debt", "Long-term Debt"]
+        equity_candidates = ["Total Stockholder Equity", "Total Stockholders' Equity", "Total Equity", "Stockholders Equity"]
+        
+        total_debt = _get_dataframe_row(bal, debt_candidates)
+        total_equity = _get_dataframe_row(bal, equity_candidates)
+        
+        if total_debt is not None:
+            metrics["total_debt"] = float(total_debt)
+        if total_equity is not None:
+            metrics["total_equity"] = float(total_equity)
+        
+        if (metrics["total_debt"] is not None and metrics["total_equity"] is not None and metrics["total_equity"] > 0):
+            metrics["debt_to_equity"] = metrics["total_debt"] / metrics["total_equity"]
+    except Exception as e:
+        logger.debug(f"Debt extraction failed: {e}")
+    
+    return metrics
+
+
 @retry_on_exception(max_attempts=3, delay=1.0)
 def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "1y") -> Dict[str, Any]:
-    """
-    Resolve company name and pull financials and recent news using yfinance.
-
-    Returns a dict with keys:
-      - symbol, company, info, financials, balance_sheet, cashflow, news (list), history (DataFrame or None)
-    """
+    """Fetch company data from yfinance with graceful error handling."""
     ticker = yf.Ticker(symbol)
-    info = {}
-    financials = None
-    balance_sheet = None
-    cashflow = None
-    news = []
-    history = None
-
-    # Info
+    
+    # Basic info
     try:
         info = ticker.info or {}
     except Exception:
         info = {}
-
+    
     company = info.get("longName") or info.get("shortName") or symbol.upper()
-
+    
     # Financial statements
-    def _safe_get(attr):
-        try:
-            val = getattr(ticker, attr)
-            # yfinance returns DataFrame-like objects; convert to pandas if present
-            return val if val is not None else None
-        except Exception:
-            return None
-
-    financials = _safe_get("financials")
-    balance_sheet = _safe_get("balance_sheet")
-    cashflow = _safe_get("cashflow")
-
+    financials = _safe_get_ticker_attr(ticker, "financials")
+    balance_sheet = _safe_get_ticker_attr(ticker, "balance_sheet")
+    
     # News
-    try:
-        raw_news = ticker.news or []
-        for n in raw_news[:top_n_news]:
-            if not isinstance(n, dict):
-                continue
-            title = n.get("title") or n.get("headline") or ""
-            link = n.get("link") or ""
-            publisher = n.get("publisher") or n.get("source") or ""
-            ts = n.get("providerPublishTime")
-            if ts:
-                try:
-                    ts = datetime.datetime.fromtimestamp(int(ts)).isoformat()
-                except (ValueError, OSError):
-                    ts = None
-            if title:
-                news.append({"title": title, "link": link, "publisher": publisher, "time": ts})
-    except Exception as e:
-        logger.warning(f"Failed to fetch news for {symbol}: {e}")
-        news = []
-
+    news = _parse_news(ticker, top_n_news)
+    
     # History
+    history = None
     try:
         history = ticker.history(period=history_period)
     except Exception:
-        history = None
-
+        pass
+    
     return {
         "symbol": symbol.upper(),
         "company": company,
         "info": info,
         "financials": financials,
         "balance_sheet": balance_sheet,
-        "cashflow": cashflow,
         "news": news,
         "history": history
     }
 
 
 def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
-    """
-    Extract key financial metrics and compute simple growth / leverage measures.
-
-    Input: dict returned by fetch_company_data
-    Output: dict with numeric metrics (or None when unavailable)
-      - current_price, trailing_pe, forward_pe, market_cap
-      - revenue, net_income, revenue_growth_pct
-      - total_debt, total_equity, debt_to_equity
-    """
-    info = data.get("info", {}) or {}
-    fin = data.get("financials")
-    bal = data.get("balance_sheet")
-    metrics: Dict[str, Optional[float]] = {
+    """Extract comprehensive financial metrics from company data."""
+    metrics = {
         "current_price": None,
         "trailing_pe": None,
         "forward_pe": None,
@@ -121,150 +187,57 @@ def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]
         "total_equity": None,
         "debt_to_equity": None
     }
-
-    # Basic info
-    try:
-        # price from history if available
-        hist = data.get("history")
-        if hist is not None and hasattr(hist, "empty") and not hist.empty:
-            metrics["current_price"] = float(hist["Close"].iloc[-1])
-        else:
-            metrics["current_price"] = float(info.get("currentPrice")) if info.get("currentPrice") else None
-    except Exception:
-        metrics["current_price"] = None
-
-    metrics["trailing_pe"] = info.get("trailingPE")
-    metrics["forward_pe"] = info.get("forwardPE")
-    metrics["market_cap"] = info.get("marketCap")
-
-    # Financials: revenue and net income (most recent column)
-    try:
-        if fin is not None and hasattr(fin, "empty") and not fin.empty:
-            # yfinance DataFrame index names vary; try common labels
-            def _get_row(df, candidates):
-                for c in candidates:
-                    if c in df.index:
-                        return df.loc[c].iloc[0]
-                return None
-
-            rev_candidates = ["Total Revenue", "Revenue", "Revenues"]
-            net_candidates = ["Net Income", "Net Income Applicable To Common Shares", "NetIncomeLoss"]
-
-            rev = _get_row(fin, rev_candidates)
-            net = _get_row(fin, net_candidates)
-            metrics["revenue"] = float(rev) if rev is not None else None
-            metrics["net_income"] = float(net) if net is not None else None
-
-            # revenue growth: compare most recent vs. previous year
-            try:
-                if fin.shape[1] >= 2:
-                    rev_new = None
-                    rev_old = None
-                    for c in rev_candidates:
-                        if c in fin.index:
-                            row = fin.loc[c]
-                            if len(row) >= 2:
-                                rev_new = float(row.iloc[-1]) if row.iloc[-1] is not None else None
-                                rev_old = float(row.iloc[-2]) if row.iloc[-2] is not None else None
-                            break
-                    if rev_new is not None and rev_old not in (None, 0):
-                        metrics["revenue_growth_pct"] = float((rev_new - rev_old) / abs(rev_old)) * 100.0
-            except Exception as e:
-                logger.debug(f"Revenue growth calculation failed: {e}")
-                metrics["revenue_growth_pct"] = None
-    except Exception:
-        pass
-
-    # Balance sheet: debt and equity
-    try:
-        if bal is not None and hasattr(bal, "empty") and not bal.empty:
-            # common labels
-            debt_candidates = ["Long Term Debt", "Total Debt", "Long-term Debt"]
-            equity_candidates = ["Total Stockholder Equity", "Total Stockholders' Equity", "Total Equity", "Stockholders Equity"]
-
-            def _get_val(df, candidates):
-                for c in candidates:
-                    if c in df.index:
-                        return df.loc[c].iloc[0]
-                return None
-
-            total_debt = _get_val(bal, debt_candidates)
-            total_equity = _get_val(bal, equity_candidates)
-            
-            if total_debt is not None:
-                metrics["total_debt"] = float(total_debt)
-            if total_equity is not None:
-                metrics["total_equity"] = float(total_equity)
-            
-            if (metrics["total_debt"] is not None and metrics["total_equity"] is not None 
-                and metrics["total_equity"] > 0):
-                metrics["debt_to_equity"] = float(metrics["total_debt"]) / float(metrics["total_equity"])
-    except Exception as e:
-        logger.debug(f"Balance sheet parsing failed: {e}")
-
+    
+    # Extract each metric group
+    metrics.update(_extract_price_metrics(data))
+    metrics.update(_extract_revenue_metrics(data.get("financials")))
+    metrics.update(_extract_debt_metrics(data.get("balance_sheet")))
+    
     return metrics
 
 
 def score_news_sentiment(headlines: List[str]) -> float:
-    """
-    Score news sentiment using vaderSentiment if available; fallback to enhanced wordlist.
-
-    Returns average compound score in range [-1, 1].
-    """
-    # Try vader
+    """Score sentiment using VADER if available, otherwise use word lexicon."""
+    if not headlines:
+        return 0.0
+    
+    # Try VADER
     try:
         from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
         analyzer = SentimentIntensityAnalyzer()
-        if not headlines:
-            return 0.0
-        scores = []
-        for h in headlines:
-            if not h:
-                continue
-            s = analyzer.polarity_scores(h).get("compound", 0.0)
-            scores.append(s)
+        scores = [analyzer.polarity_scores(h).get("compound", 0.0) for h in headlines if h]
         return float(sum(scores) / len(scores)) if scores else 0.0
     except ImportError:
-        logger.debug("vaderSentiment not available, using fallback sentiment analysis")
-        # Fallback enhanced lexicon
-        POS = {"good", "great", "positive", "beat", "beats", "up", "gain", "gains", "growth", "strong", 
-               "profit", "profits", "outperform", "surge", "rally", "excellent", "bullish", "boost"}
-        NEG = {"bad", "worse", "miss", "missed", "down", "loss", "losses", "weak", "decline", "fall", 
-               "cut", "warn", "warning", "bearish", "slump", "crash", "plunge"}
-        if not headlines:
-            return 0.0
-        total = 0.0
-        count = 0
-        for h in headlines:
-            if not h:
-                continue
-            words = set(w.strip(".,!?:;()[]\"'").lower() for w in h.split())
-            pos = len(words & POS)
-            neg = len(words & NEG)
-            if pos + neg == 0:
-                continue
-            total += (pos - neg) / (pos + neg)
+        pass
+    
+    # Fallback: simple word-based sentiment
+    POS = {"good", "great", "positive", "beat", "beats", "up", "gain", "gains", "growth", "strong", 
+           "profit", "profits", "outperform", "surge", "rally", "excellent", "bullish", "boost"}
+    NEG = {"bad", "worse", "miss", "missed", "down", "loss", "losses", "weak", "decline", "fall", 
+           "cut", "warn", "warning", "bearish", "slump", "crash", "plunge"}
+    
+    total_score = 0.0
+    count = 0
+    
+    for h in headlines:
+        if not h:
+            continue
+        words = set(w.strip(".,!?:;()[]\"'").lower() for w in h.split())
+        pos = len(words & POS)
+        neg = len(words & NEG)
+        if pos + neg > 0:
+            total_score += (pos - neg) / (pos + neg)
             count += 1
-        return float(total / count) if count else 0.0
-    except Exception as e:
-        logger.error(f"Sentiment analysis failed: {e}")
-        return 0.0
+    
+    return float(total_score / count) if count > 0 else 0.0
 
 
-def generate_analysis_script(symbol: str,
-                             metrics: Dict[str, Any],
-                             headlines: List[str],
-                             sentiment_score: float,
-                             filename: Optional[str] = None) -> str:
-    """
-    Generate a Python analysis script as a string.
-
-    The script is a readable starting point that re-fetches data and prints key metrics.
-    """
+def generate_analysis_script(symbol: str, metrics: Dict[str, Any], headlines: List[str],
+                             sentiment_score: float, filename: Optional[str] = None) -> str:
+    """Generate a Python analysis script as a string."""
     if filename is None:
         filename = f"{symbol.upper()}_analysis.py"
 
-    # Build a compact script string
     script_lines = [
         "import yfinance as yf",
         "import pandas as pd",
@@ -290,23 +263,12 @@ def generate_analysis_script(symbol: str,
         "# Add further analysis: ratio calculations, visualizations, backtests, or export results.",
         "print('Script generated on', datetime.utcnow().isoformat())",
     ]
-    script_text = "\n".join(script_lines)
-    return script_text
+    return "\n".join(script_lines)
 
 
-def decide_action(metrics: Dict[str, Any],
-                  sentiment_score: float,
-                  script_text: str,
+def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: str,
                   thresholds: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
-    """
-    Lightweight rule-based decision to return BUY / SELL / HOLD.
-
-    Returns dict with:
-      - verdict: "BUY"|"SELL"|"HOLD"
-      - score: numeric summary (pos_signals - neg_signals)
-      - reasons: list of strings
-      - script: the generated script_text (for convenience)
-    """
+    """Decide BUY/SELL/HOLD based on metrics and sentiment."""
     if thresholds is None:
         thresholds = {
             "revenue_growth_good_pct": 5.0,
@@ -323,7 +285,7 @@ def decide_action(metrics: Dict[str, Any],
     neg = 0
     reasons: List[str] = []
 
-    # Net income positive
+    # Net income
     ni = metrics.get("net_income")
     if ni is not None:
         if ni > 0:
@@ -331,7 +293,7 @@ def decide_action(metrics: Dict[str, Any],
             reasons.append("positive net income")
         else:
             neg += 1
-            reasons.append("negative net income or not reported")
+            reasons.append("negative net income")
     else:
         reasons.append("net income unavailable")
 
@@ -345,7 +307,7 @@ def decide_action(metrics: Dict[str, Any],
             neg += 1
             reasons.append(f"revenue decline {rg:.1f}%")
         else:
-            reasons.append(f"revenue growth muted {rg:.1f}%")
+            reasons.append(f"muted growth {rg:.1f}%")
     else:
         reasons.append("revenue growth unavailable")
 
@@ -366,14 +328,14 @@ def decide_action(metrics: Dict[str, Any],
     # Sentiment
     if sentiment_score > thresholds["sentiment_good"]:
         pos += 1
-        reasons.append(f"positive news sentiment {sentiment_score:.2f}")
+        reasons.append(f"positive sentiment {sentiment_score:.2f}")
     elif sentiment_score < thresholds["sentiment_bad"]:
         neg += 1
-        reasons.append(f"negative news sentiment {sentiment_score:.2f}")
+        reasons.append(f"negative sentiment {sentiment_score:.2f}")
     else:
-        reasons.append(f"neutral news sentiment {sentiment_score:.2f}")
+        reasons.append(f"neutral sentiment {sentiment_score:.2f}")
 
-    # PE heuristic
+    # PE ratio
     pe = metrics.get("trailing_pe") or metrics.get("forward_pe")
     if pe is not None:
         try:
@@ -388,16 +350,16 @@ def decide_action(metrics: Dict[str, Any],
                 else:
                     reasons.append(f"PE in range {pe_val:.1f}")
             else:
-                reasons.append("PE invalid (non-positive)")
+                reasons.append("PE invalid")
         except (ValueError, TypeError):
-            logger.debug(f"PE parsing error: {pe}")
-            reasons.append("PE parsing error")
+            reasons.append("PE parsing failed")
     else:
         reasons.append("PE unavailable")
 
-    # Weighted decision: no signal insufficient for strong verdict
+    # Decision logic
     if pos == 0 and neg == 0:
         verdict = "HOLD"
+        score = 0
     else:
         score = pos - neg
         if score >= 2:

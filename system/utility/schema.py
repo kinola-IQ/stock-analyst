@@ -1,45 +1,24 @@
-"""
-Defines and validates the input schema for the /agent endpoint
-and the output schema for the agent's response
-"""
+"""Schema definitions for API endpoints."""
 
-import logging
-from pydantic import BaseModel, Field, field_validator, model_validator
-# from fastapi.exceptions import RequestValidationError
-
-logger = logging.getLogger(__name__)
+from pydantic import BaseModel, Field, field_validator
 
 
 class UserInputSchema(BaseModel):
-    """Enforces input requirements for the /agent endpoint"""
-    ticker: str = Field(
-        ...,
-        min_length=1,
-        max_length=6,
-        description="Stock ticker symbol (alphabetical characters only)"
-    )
+    """Ticker input validation schema."""
+    ticker: str = Field(..., min_length=1, max_length=6, description="Stock ticker symbol")
 
-    # standardize tickers
-    @field_validator('ticker', mode='before')
-    def normalize_ticker(cls, ticker):
-        """Standardize ticker to uppercase"""
-        if not isinstance(ticker, str):
-            logger.info('Ticker must be in letters')
-            raise ValueError('Ticker must be in letters')
-        return ticker.upper()
+    @field_validator('ticker')
+    @classmethod
+    def validate_ticker(cls, value: str) -> str:
+        """Validate and normalize ticker to uppercase."""
+        value = value.strip().upper()
+        if not value.isalpha():
+            raise ValueError('Ticker must contain only alphabetical characters')
+        return value
 
-    # enforce only alphabetic inputs
-    @model_validator(mode='after')
-    def validate_alphabetical(self):
-        """Ensure ticker contains only alphabetical characters"""
-        if not self.ticker.isalpha():
-            raise ValueError(
-                'Ticker must contain only alphabetical characters'
-                )
-        return self
 
 class AgentOutputSchema(BaseModel):
-    """Schema for agent response"""
+    """Agent response schema."""
     final_summary: str = Field(..., description="Summary of stock analysis")
     status: str = Field(default="success", description="Response status")
     timestamp: str = Field(..., description="Timestamp of analysis")

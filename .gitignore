@@ -1,4 +1,4 @@
-/.env
-/docker-entrypoint.sh
-/Originial Design Plan.png
-/README.md
+.env
+docker-entrypoint.sh
+Originial Design Plan.png
+*.log*

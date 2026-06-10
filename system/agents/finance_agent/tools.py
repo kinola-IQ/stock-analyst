@@ -13,7 +13,7 @@ from .tools_config.ticker_tools import (
     score_news_sentiment,
     generate_analysis_script,
     decide_action)
-from ...utility.model import get_model
+from ...utility import model
 from ...utility.result_storage import ResultStorage
 
 
@@ -25,7 +25,7 @@ def research_agent() -> Agent:
     """
     return Agent(
         name="ResearchAgent",
-        model=get_model(),
+        model=model.get_model(),
         instruction="""
         You are a specialized research agent.
         Your only job is to use the google_search tool\

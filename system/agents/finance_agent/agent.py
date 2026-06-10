@@ -15,7 +15,7 @@ from ..finance_agent.tools import (
 from ...utility.utils import retry_config
 
 # model serving
-from ...utility.model import get_model
+from ...utility import model
 
 def root_agent() -> LlmAgent:
     """Return a root LLM agent that coordinates the research workflow."""
@@ -35,9 +35,17 @@ def root_agent() -> LlmAgent:
 
     instruction = "\n".join(instruction_lines)
 
+    try:
+        model_name = model.get_model()
+    except Exception as exc:
+        # Surface a clearer error when model is not available
+        raise RuntimeError(
+            "LLM model not loaded; ensure GOOGLE_GENAI_API_KEY is set and load_model() succeeded"
+        ) from exc
+
     return LlmAgent(
         name="ResearchCoordinator",
-        model=get_model(),
+        model=model_name,
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
         tools=[AgentTool(research_agent()), FunctionTool(log_tool), FunctionTool(analyse_ticker), FunctionTool(save_summary)],
