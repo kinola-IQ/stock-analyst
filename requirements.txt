@@ -3,7 +3,7 @@ uvicorn
 yfinance
 nest_asyncio
 vaderSentiment
-protobuf==5.28.1 
+protobuf==5.29.6 
 google-adk
 # google-adk[extensions] 
 litellm
