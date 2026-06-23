@@ -84,10 +84,10 @@ def root_agent() -> LlmAgent:
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
         tools=[
-            AgentTool(research_agent()),
             FunctionTool(log_tool),
             FunctionTool(analyse_ticker),
             FunctionTool(save_summary)
             ],
         output_key="final_summary",
+        sub_agents=[research_agent()]
     )

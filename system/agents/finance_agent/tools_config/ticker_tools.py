@@ -17,6 +17,18 @@ def _safe_get_ticker_attr(ticker, attr: str):
     except Exception:
         return None
 
+# implementing fallback for Financial extraction
+def _first_numeric(*values):
+    for v in values:
+        if v is None:
+            continue
+        try:
+            if str(v) != "nan":
+                return float(v)
+        except Exception:
+            continue
+    return None
+
 
 def _parse_news(ticker, top_n: int = 5) -> List[Dict[str, Any]]:
     """Extract and parse news from ticker."""
@@ -70,9 +82,12 @@ def _extract_price_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
     except Exception:
         pass
     
-    metrics["trailing_pe"] = info.get("trailingPE")
-    metrics["forward_pe"] = info.get("forwardPE")
-    metrics["market_cap"] = info.get("marketCap")
+    metrics["trailing_pe"] = _first_numeric(info.get("trailingPE"))
+    metrics["forward_pe"] = _first_numeric(info.get("forwardPE"))
+    metrics["market_cap"] = _first_numeric(info.get("marketCap"))
+    metrics["total_debt"] = _first_numeric(info.get("totalDebt"), info.get("debt"))
+    metrics["total_equity"] = _first_numeric(info.get("totalStockholderEquity"), info.get("totalEquity"))
+    metrics["debt_to_equity"] = _first_numeric(info.get("debtToEquity"))
     return metrics
 
 

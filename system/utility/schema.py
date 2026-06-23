@@ -20,5 +20,6 @@ class UserInputSchema(BaseModel):
 class AgentOutputSchema(BaseModel):
     """Agent response schema."""
     final_summary: str = Field(..., description="Summary of stock analysis")
+    summary: str = Field(...,description="Summary of search results")
     status: str = Field(default="success", description="Response status")
     timestamp: str = Field(..., description="Timestamp of analysis")

@@ -1,6 +1,7 @@
 """FastAPI routes for stock analysis."""
 
 from datetime import datetime
+import asyncio
 from fastapi import HTTPException, APIRouter, Request, Depends, Header
 from google.genai import types
 
@@ -8,7 +9,7 @@ from system.utility.schema import UserInputSchema, AgentOutputSchema
 from system.utility.logger import logger
 from system.utility.utils import get_env
 from system.utility import model
-
+from system.agents.finance_agent import tools
 router = APIRouter()
 
 
@@ -62,51 +63,58 @@ async def analyze_stock(
         )
 
         final_response_text = "No response from agent"
+        async def consume_stream():
+            nonlocal final_response_text
+            # Stream responses from runner
+            async for event in runner.run_async(
+                user_id=user_id, session_id=session_id, new_message=content
+            ):
+                # Handle final response - check multiple possible properties
+                is_final = (
+                    (hasattr(event, 'is_final_response')
+                    and callable(event.is_final_response)
+                    and event.is_final_response()) or
 
-        # Stream responses from runner
-        async for event in runner.run_async(
-            user_id=user_id, session_id=session_id, new_message=content
-        ):
-            # Handle final response - check multiple possible properties
-            is_final = (
-                (hasattr(event, 'is_final_response')
-                 and callable(event.is_final_response)
-                 and event.is_final_response()) or
+                    (hasattr(event, 'is_final_response')
+                    and isinstance(event.is_final_response, bool)
+                    and event.is_final_response) or
 
-                (hasattr(event, 'is_final_response')
-                 and isinstance(event.is_final_response, bool)
-                 and event.is_final_response) or
+                    (hasattr(event, 'final_response') and event.final_response)
+                    )
 
-                (hasattr(event, 'final_response') and event.final_response)
-                )
+                if is_final:
+                    if hasattr(event, 'content') and event.content:
+                        if hasattr(event.content, 'parts') and event.content.parts:
+                            final_response_text = event.content.parts[0].text
+                        elif hasattr(event.content, 'text'):
+                            final_response_text = event.content.text
+                
 
-            if is_final:
+                # Also capture regular content in case event
+                # doesn't have final_response marker
                 if hasattr(event, 'content') and event.content:
                     if hasattr(event.content, 'parts') and event.content.parts:
-                        final_response_text = event.content.parts[0].text
+                        text = event.content.parts[0].text
+                        if text:
+                            final_response_text = text
                     elif hasattr(event.content, 'text'):
-                        final_response_text = event.content.text
-                break
+                        if event.content.text:
+                            final_response_text = event.content.text
 
-            # Also capture regular content in case event
-            # doesn't have final_response marker
-            if hasattr(event, 'content') and event.content:
-                if hasattr(event.content, 'parts') and event.content.parts:
-                    text = event.content.parts[0].text
-                    if text:
-                        final_response_text = text
-                elif hasattr(event.content, 'text'):
-                    if event.content.text:
-                        final_response_text = event.content.text
+        await asyncio.wait_for(consume_stream(), timeout=60)
 
         if final_response_text == "No response from agent":
             logger.warning("No response from agent for %s", ticker_symbol)
-        else:
-            logger.info("Analysis completed: %s (%s) chars",
+            raise HTTPException(
+                status_code=500, detail="could not generate a response"
+                )
+        
+        logger.info("Analysis completed: %s (%s) chars",
                         ticker_symbol, len(final_response_text))
 
         return AgentOutputSchema(
             final_summary=final_response_text,
+            summary=tools.summary_result[0].get('summary'),
             timestamp=datetime.now().isoformat()
         )
     except Exception as exc:

@@ -19,18 +19,22 @@ from ...utility import model
 
 # Research agent for websearching
 def research_agent() -> Agent:
-    """Create a Research Agent for gathering company information via web search.
-    
-    This agent uses the Google Search tool to find relevant information about
-    a given company or ticker. It searches for and returns 2-3 key pieces of
-    information with proper citations.
-    
+    """Create a research agent for web-based company investigation.
+
+    The agent uses Google Search to gather 2–3 concise, relevant facts about
+    the specified company, event, milestone, or market development, and returns
+    them with citations.
+
+    Args:
+        company (str): The research topic. Use a short, specific phrase such as
+            a company name, ticker symbol, product name, or recent business event.
+
     Returns:
-        Agent: A configured Research Agent instance with Google Search capability
-               that can be used as a tool by the root coordinator agent.
-    
+        Agent: A configured research agent with Google Search access. The agent
+        is intended to be invoked by the root coordinator agent.
+
     Raises:
-        RuntimeError: If the LLM model cannot be loaded or API keys are not set.
+        RuntimeError: If the model cannot be loaded or required API keys are missing.
     """
     try:
         AGENT_MODEL = model.get_model()
@@ -43,12 +47,15 @@ def research_agent() -> Agent:
     return Agent(
         name="ResearchAgent",
         model=AGENT_MODEL,
-        instruction="""
+        instruction=
+        """
         You are a specialized research agent.
-        Your only job is to use the google_search tool\
-              to find 2-3 pieces of relevant information\
-                on the given topic and present the findings with citations.
-        Be concise and to the point in your findings.""",
+
+        Use the google_search tool to find 2–3 relevant facts about:
+        {company}
+
+        Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary.
+        """.strip(),
         tools=[google_search],
         # The result of this agent will be stored in the session state
         #  with this key.
@@ -57,7 +64,7 @@ def research_agent() -> Agent:
 
 
 # logger tool for logging progress
-def log_tool(message: str):
+def log_tool(message: str) -> str:
     """Log a progress message using the configured logger.
     
     This tool is useful for recording progress, milestones, debugging information,
@@ -69,13 +76,14 @@ def log_tool(message: str):
                       including context about what action or milestone is being recorded.
     
     Returns:
-        None
+        str: A confirmation message indicating the log entry was recorded.
     
     Example:
         log_tool("Starting analysis for AAPL")
         log_tool("Successfully fetched company financials")
     """
-    return logger.info(message)
+    logger.info(message)
+    return f"Logged: {message}"
 
 
 # Convenience wrapper that ties everything together
@@ -158,8 +166,8 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
 summary_result = []
 
 
-def save_summary(summary: str):
-    """Save a research summary to persistent storage.
+def save_summary(summary: str) -> str:
+    """Save the summary of research findings to persistent storage.
     
     This tool is useful for storing findings from research, analysis, and conclusions
     in a structured format that can be retrieved later. Each summary is saved with
@@ -171,11 +179,17 @@ def save_summary(summary: str):
                       verdict, and any relevant caveats or recommendations.
     
     Returns:
-        None: The summary is appended to the internal storage list.
+        str: A status message indicating success or failure.
+             - returns 'saved' if the summary was appended to storage successfully.
+             - returns 'failed: <error>' if an exception occurs.
     
     Example:
         save_summary("AAPL Analysis: Strong fundamentals with positive sentiment. Verdict: BUY")
     """
-    return summary_result.append(
-        {'summary': summary}
-    )
+    try:
+        summary_result.append(
+            {'summary': summary}
+            )
+        return "saved"
+    except Exception as err:
+        return f"failed: {err}"
