@@ -14,7 +14,7 @@ from ..utility.logger import logger
 
 class ResultStorage:
     """Class to handle in-memory storage of results (stores instances).
-    
+
     Thread-safe storage with configurable memory limit and LRU eviction.
     """
 

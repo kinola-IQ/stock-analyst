@@ -137,7 +137,34 @@ def _extract_debt_metrics(bal) -> Dict[str, Optional[float]]:
 
 @retry_on_exception(max_attempts=3, delay=1.0)
 def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "1y") -> Dict[str, Any]:
-    """Fetch company data from yfinance with graceful error handling."""
+    """Fetch comprehensive company data from yfinance with retry and error handling.
+    
+    Retrieves company information, financial statements, news headlines, and
+    historical price data for a given stock ticker. Handles network errors and
+    missing data gracefully, retrying up to 3 times with exponential backoff.
+    
+    Args:
+        symbol (str): The stock ticker symbol (e.g., "AAPL", "MSFT").
+                     Will be converted to uppercase.
+        top_n_news (int): Maximum number of recent news articles to retrieve.
+                         Defaults to 5.
+        history_period (str): Historical data period as yfinance period string
+                             (e.g., "1y", "6mo", "3mo"). Defaults to "1y".
+    
+    Returns:
+        Dict[str, Any]: A dictionary containing:
+            - symbol (str): The ticker symbol in uppercase
+            - company (str): Company name (long name, short name, or ticker)
+            - info (Dict): Company information including P/E, market cap, etc.
+            - financials (DataFrame): Annual financial statements
+            - balance_sheet (DataFrame): Annual balance sheet data
+            - news (List[Dict]): Recent news articles with title, link, publisher, time
+            - history (DataFrame): Historical OHLCV price data
+    
+    Note:
+        Missing data fields are set to None rather than raising exceptions.
+        The function retries on network errors up to 3 times before failing.
+    """
     ticker = yf.Ticker(symbol)
     
     # Basic info
@@ -174,7 +201,38 @@ def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "
 
 
 def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
-    """Extract comprehensive financial metrics from company data."""
+    """Extract comprehensive financial metrics from company data.
+    
+    Processes company data fetched from yfinance and extracts key financial
+    metrics organized into three categories: price metrics, revenue metrics,
+    and debt/equity metrics. Handles missing or malformed data gracefully.
+    
+    Args:
+        data (Dict[str, Any]): Company data dictionary as returned by fetch_company_data.
+                              Should contain 'info', 'financials', and 'balance_sheet' keys.
+    
+    Returns:
+        Dict[str, Optional[float]]: A dictionary with the following metrics:
+            Price metrics:
+                - current_price (float): Current stock price
+                - trailing_pe (float): Trailing P/E ratio
+                - forward_pe (float): Forward P/E ratio
+                - market_cap (float): Market capitalization
+            Revenue metrics:
+                - revenue (float): Annual revenue
+                - net_income (float): Annual net income
+                - revenue_growth_pct (float): Year-over-year revenue growth %
+            Debt metrics:
+                - total_debt (float): Total company debt
+                - total_equity (float): Total stockholder equity
+                - debt_to_equity (float): Debt-to-equity ratio
+            
+            All values default to None if unavailable or cannot be extracted.
+    
+    Note:
+        Missing metrics are set to None rather than raising exceptions.
+        Extraction failures are logged at DEBUG level.
+    """
     metrics = {
         "current_price": None,
         "trailing_pe": None,
@@ -197,7 +255,34 @@ def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]
 
 
 def score_news_sentiment(headlines: List[str]) -> float:
-    """Score sentiment using VADER if available, otherwise use word lexicon."""
+    """Analyze and score the overall sentiment of news headlines.
+    
+    Processes a list of news headlines and returns an aggregate sentiment score
+    indicating overall market sentiment for the company. Uses VADER sentiment
+    analysis if available, otherwise falls back to word-based scoring.
+    
+    Args:
+        headlines (List[str]): List of news headlines to analyze. Can be any
+                              text content; empty headlines are skipped.
+    
+    Returns:
+        float: Aggregate sentiment score ranging from -1.0 to 1.0:
+               - Positive values (closer to 1.0) indicate bullish sentiment
+               - Negative values (closer to -1.0) indicate bearish sentiment
+               - Zero indicates neutral sentiment
+               - Empty headline list returns 0.0
+    
+    Note:
+        Uses VADER (Valence Aware Dictionary and sEntiment Reasoner) from
+        vaderSentiment if installed. Falls back to simple word lexicon matching
+        with predefined positive/negative word sets.
+        Returns 0.0 for empty input or if no sentiment indicators found.
+    
+    Example:
+        headlines = ["Apple beats earnings expectations", "Stock price falls"]
+        score = score_news_sentiment(headlines)
+        # Returns a score between -1.0 and 1.0 reflecting overall sentiment
+    """
     if not headlines:
         return 0.0
     
@@ -234,7 +319,39 @@ def score_news_sentiment(headlines: List[str]) -> float:
 
 def generate_analysis_script(symbol: str, metrics: Dict[str, Any], headlines: List[str],
                              sentiment_score: float, filename: Optional[str] = None) -> str:
-    """Generate a Python analysis script as a string."""
+    """Generate a Python analysis script with company data and findings.
+    
+    Creates a complete, executable Python script that documents the analysis
+    performed on a stock. The script includes company data, extracted metrics,
+    news headlines, sentiment scores, and can be extended with further analysis.
+    
+    Args:
+        symbol (str): The stock ticker symbol (will be uppercase).
+        metrics (Dict[str, Any]): Dictionary of extracted financial metrics.
+        headlines (List[str]): List of news headlines to include in the script.
+        sentiment_score (float): The calculated sentiment score (-1.0 to 1.0).
+        filename (Optional[str]): Name for the generated script file.
+                                 Defaults to "{SYMBOL}_analysis.py".
+    
+    Returns:
+        str: A complete Python script as a multi-line string that:
+             - Imports necessary libraries
+             - Defines the ticker symbol
+             - Fetches company info
+             - Prints current stock price
+             - Outputs metrics snapshot
+             - Lists recent headlines
+             - Displays sentiment score
+             - Provides template for further analysis
+    
+    Note:
+        The returned script is ready to execute and can be extended with
+        additional analysis, visualizations, backtests, or data exports.
+    
+    Example:
+        script = generate_analysis_script("AAPL", metrics, headlines, 0.45)
+        # Returns a complete Python script as a string
+    """
     if filename is None:
         filename = f"{symbol.upper()}_analysis.py"
 
@@ -268,7 +385,64 @@ def generate_analysis_script(symbol: str, metrics: Dict[str, Any], headlines: Li
 
 def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: str,
                   thresholds: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
-    """Decide BUY/SELL/HOLD based on metrics and sentiment."""
+    """Apply decision rules to financial metrics and generate a BUY/SELL/HOLD verdict.
+    
+    Evaluates company financial metrics, news sentiment, and valuation ratios
+    against configurable thresholds to produce an investment recommendation.
+    Uses a scoring system where positive factors contribute +1 and negative
+    factors contribute -1 to determine the final verdict.
+    
+    Args:
+        metrics (Dict[str, Any]): Dictionary of financial metrics extracted
+                                 from company data. Expected keys include:
+                                 - net_income (float): Annual net income
+                                 - revenue_growth_pct (float): YoY revenue growth %
+                                 - debt_to_equity (float): Debt-to-equity ratio
+                                 - trailing_pe (float): Trailing P/E ratio
+                                 - forward_pe (float): Forward P/E ratio
+        sentiment_score (float): Overall sentiment score (-1.0 to 1.0) from
+                               news headline analysis.
+        script_text (str): Generated analysis script (stored in results for reference).
+        thresholds (Optional[Dict[str, float]]): Custom decision thresholds. Defaults:
+                                                - revenue_growth_good_pct: 5.0
+                                                - revenue_growth_bad_pct: -5.0
+                                                - debt_to_equity_good: 1.0
+                                                - debt_to_equity_bad: 2.0
+                                                - sentiment_good: 0.15
+                                                - sentiment_bad: -0.15
+                                                - pe_low: 15.0
+                                                - pe_high: 40.0
+    
+    Returns:
+        Dict[str, Any]: A dictionary containing:
+            - verdict (str): Investment decision - "BUY" (score >= 2),
+                            "SELL" (score <= -2), or "HOLD" (score -1 to 1)
+            - score (int): Net score (positive_signals - negative_signals)
+            - pos_signals (int): Count of positive indicators
+            - neg_signals (int): Count of negative indicators
+            - reasons (List[str]): Detailed list of factors influencing the decision
+            - script (str): The input script for reference
+    
+    Scoring Rules:
+        Positive factors (+1 each):
+            - Positive net income
+            - Revenue growth > revenue_growth_good_pct
+            - Debt-to-equity < debt_to_equity_good
+            - Sentiment score > sentiment_good
+            - P/E ratio < pe_low (undervalued)
+        
+        Negative factors (-1 each):
+            - Negative net income
+            - Revenue decline < revenue_growth_bad_pct
+            - Debt-to-equity > debt_to_equity_bad
+            - Sentiment score < sentiment_bad
+            - P/E ratio > pe_high (overvalued)
+    
+    Example:
+        decision = decide_action(metrics, 0.3, script_text)
+        print(f"Verdict: {decision['verdict']}")  # Output: "BUY"
+        print(f"Reasons: {decision['reasons']}")  # List of factors
+    """
     if thresholds is None:
         thresholds = {
             "revenue_growth_good_pct": 5.0,

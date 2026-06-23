@@ -1,15 +1,14 @@
 fastapi
 uvicorn
 yfinance
-pandas
-pydantic
 nest_asyncio
 vaderSentiment
-# pinecone-client
-google-genai
+protobuf==5.28.1 
 google-adk
+# google-adk[extensions] 
+litellm
 # Development dependencies
-# pytest
-# pytest-mock
-# pytest-asyncio
-# pytest-benchmark
+pytest
+pytest-mock
+pytest-asyncio
+pytest-benchmark
