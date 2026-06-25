@@ -1,16 +1,18 @@
 """Tests for tools.py"""
 import pytest
 from unittest.mock import Mock, patch
+from system.agents.finance_agent.agent import root_agent
 from system.agents.finance_agent.tools import research_agent, analyse_ticker
 
 
 class TestResearchAgent:
-    @patch('system.agents.finance_agent.tools.Ollama')
+    @patch('system.agents.finance_agent.tools.model.get_model')
     @patch('system.agents.finance_agent.tools.Agent')
     @patch('system.agents.finance_agent.tools.google_search')
-    def test_research_agent_creation(self, mock_google_search, mock_agent, mock_ollama):
+    def test_research_agent_creation(self, mock_google_search, mock_agent, mock_get_model):
         mock_agent_instance = Mock()
         mock_agent.return_value = mock_agent_instance
+        mock_get_model.return_value = 'fake-model'
 
         result = research_agent()
 
@@ -18,8 +20,27 @@ class TestResearchAgent:
         mock_agent.assert_called_once()
         call_args = mock_agent.call_args
         assert call_args[1]['name'] == 'ResearchAgent'
-        assert 'qwen3:4b' in str(call_args[1]['model'])
+        assert call_args[1]['model'] == 'fake-model'
         assert mock_google_search in call_args[1]['tools']
+
+
+class TestRootAgent:
+    @patch('system.agents.finance_agent.agent.research_agent')
+    @patch('system.agents.finance_agent.agent.FunctionTool')
+    @patch('system.agents.finance_agent.agent.LlmAgent')
+    @patch('system.agents.finance_agent.agent.model.get_model')
+    def test_root_agent_does_not_register_log_tool(self, mock_get_model, mock_llm_agent, mock_function_tool, mock_research_agent):
+        mock_get_model.return_value = 'fake-model'
+        mock_llm_agent.return_value = Mock()
+        mock_function_tool.side_effect = lambda func: func
+        mock_research_agent.return_value = Mock()
+
+        root_agent()
+
+        tool_names = [call.args[0].__name__ for call in mock_function_tool.call_args_list]
+        assert 'log_tool' not in tool_names
+        assert 'analyse_ticker' in tool_names
+        assert 'save_findings' in tool_names
 
 
 class TestAnalyseTicker:
@@ -29,7 +50,7 @@ class TestAnalyseTicker:
     @patch('system.agents.finance_agent.tools.generate_analysis_script')
     @patch('system.agents.finance_agent.tools.decide_action')
     def test_analyse_ticker_success(self, mock_decide, mock_generate, mock_score, mock_extract, mock_fetch):
-        mock_fetch.return_value = {'symbol': 'AAPL', 'news': ['news1']}
+        mock_fetch.return_value = {'symbol': 'AAPL', 'news': [{'title': 'news1'}]}
         mock_extract.return_value = {'current_price': 150.0}
         mock_score.return_value = 0.5
         mock_generate.return_value = 'script'

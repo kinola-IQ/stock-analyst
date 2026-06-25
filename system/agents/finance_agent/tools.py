@@ -63,29 +63,6 @@ def research_agent() -> Agent:
     )
 
 
-# logger tool for logging progress
-def log_tool(message: str) -> str:
-    """Log a progress message using the configured logger.
-    
-    This tool is useful for recording progress, milestones, debugging information,
-    or important events during the research and analysis workflow. Messages are
-    logged at INFO level with timestamps for traceability.
-    
-    Args:
-        message (str): The message to log. Should be descriptive and concise,
-                      including context about what action or milestone is being recorded.
-    
-    Returns:
-        str: A confirmation message indicating the log entry was recorded.
-    
-    Example:
-        log_tool("Starting analysis for AAPL")
-        log_tool("Successfully fetched company financials")
-    """
-    logger.info(message)
-    return f"Logged: {message}"
-
-
 # Convenience wrapper that ties everything together
 def analyse_ticker(symbol: str) -> Dict[str, Any]:
     """Execute a comprehensive financial analysis pipeline for a given stock ticker.
@@ -143,9 +120,24 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
         print(f"Current Price: ${result['metrics']['current_price']}")
         print(f"Sentiment: {result['sentiment_score']}")
     """
-    data = fetch_company_data(symbol)
+    try:
+        data = fetch_company_data(symbol)
+    except Exception as exc:
+        return {
+            "symbol": symbol.upper(),
+            "error": f"Fetch failed: {exc}"
+        }
+
     metrics = extract_financial_metrics(data)
-    headlines = [n.get("title", "") for n in data.get("news", [])]
+    headlines = []
+    for item in data.get("news", []):
+        if isinstance(item, dict):
+            headlines.append(item.get("title", ""))
+        elif isinstance(item, str):
+            headlines.append(item)
+        else:
+            headlines.append(str(item))
+
     sentiment = score_news_sentiment(headlines)
     script = generate_analysis_script(symbol, metrics, headlines, sentiment,)
     decision = decide_action(metrics, sentiment, script)
@@ -163,32 +155,29 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
 
 
 # save summary of search results
-summary_result = []
+research_result = []
 
 
-def save_summary(summary: str) -> str:
-    """Save the summary of research findings to persistent storage.
+def save_findings(findings: str) -> str:
+    """Save the research findings to persistent storage.
     
-    This tool is useful for storing findings from research, analysis, and conclusions
-    in a structured format that can be retrieved later. Each summary is saved with
-    a timestamp and index for easy retrieval.
+    This tool is useful for storing findings from the research sub agent. it's analysis, and conclusions
+    in a structured format that can be retrieved later.
     
     Args:
-        summary (str): The research summary text to save. Should be a comprehensive
-                      summary that includes key findings, analysis results, investment
+        findings (str): The research text to save. Should be a comprehensive
+                      that that includes the key findings, citations, analysis results, investment
                       verdict, and any relevant caveats or recommendations.
     
     Returns:
         str: A status message indicating success or failure.
-             - returns 'saved' if the summary was appended to storage successfully.
+             - returns 'saved' if the findingd was appended to storage successfully.
              - returns 'failed: <error>' if an exception occurs.
     
-    Example:
-        save_summary("AAPL Analysis: Strong fundamentals with positive sentiment. Verdict: BUY")
     """
     try:
-        summary_result.append(
-            {'summary': summary}
+        research_result.append(
+            {'findings': findings}
             )
         return "saved"
     except Exception as err:

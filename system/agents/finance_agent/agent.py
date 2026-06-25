@@ -2,15 +2,14 @@
 
 # from google.adk.code_executors import BuiltInCodeExecutor
 from google.adk.agents import LlmAgent
-from google.adk.tools import AgentTool, FunctionTool
+from google.adk.tools import FunctionTool
 
 
 # custom modules
 from ..finance_agent.tools import (
     research_agent,
-    log_tool,
     analyse_ticker,
-    save_summary
+    save_findings
 )
 
 
@@ -60,10 +59,9 @@ def root_agent() -> LlmAgent:
         "You are a Research Coordinator responsible for independent, accurate research on the provided ticker.",
         "Maintain autonomy: choose the research approach, order of steps, and depth of investigation needed to meet the objective.",
         "Use the ResearchAgent tool to gather relevant primary and secondary information about the ticker.",
-        "Summarize findings into a concise, factual research summary and save it using the save_summary tool.",
+        "Save findings into a concise, factual research summary and save it using the save_findings tool.",
         "Invoke the analyse_ticker tool to produce a quantitative financial analysis and key metrics.",
         "Synthesize research and analysis into a single, clear final summary for the user, highlighting conclusions and any important caveats.",
-        "Record notable milestones, decisions, and errors with log_tool when it aids traceability or debugging.",
         "If data gaps or ambiguous results remain, note them explicitly in the final summary and recommend next steps.",
         "Prioritize accuracy, transparency, and reproducibility; avoid making unsupported claims or speculative forecasts."
     ]
@@ -84,9 +82,8 @@ def root_agent() -> LlmAgent:
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
         tools=[
-            FunctionTool(log_tool),
             FunctionTool(analyse_ticker),
-            FunctionTool(save_summary)
+            FunctionTool(save_findings)
             ],
         output_key="final_summary",
         sub_agents=[research_agent()]

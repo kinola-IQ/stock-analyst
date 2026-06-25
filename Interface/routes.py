@@ -113,8 +113,8 @@ async def analyze_stock(
                         ticker_symbol, len(final_response_text))
 
         return AgentOutputSchema(
-            final_summary=final_response_text,
-            summary=tools.summary_result[0].get('summary'),
+            result=final_response_text,
+            findings=tools.research_result[0].get('findings'),
             timestamp=datetime.now().isoformat()
         )
     except Exception as exc:
