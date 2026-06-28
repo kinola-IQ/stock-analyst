@@ -1,41 +1,59 @@
 # Stock Analyst
 
-Stock Analyst is a FastAPI-based stock research service that uses a Google ADK agent workflow to analyze a ticker symbol and return a structured research summary. The app integrates yfinance, VADER sentiment scoring, and LiteLLM to produce a concise recommendation and supporting findings.
+Stock Analyst is a FastAPI-based stock research service that uses Google ADK and LiteLLM to analyze a ticker symbol and return a structured research summary. The app combines yfinance market data, VADER sentiment scoring, and an agent-driven workflow to deliver a concise analysis with a buy/sell/hold recommendation.
 
-## What this project does
+## Current version overview
 
-- Accepts a stock ticker through a REST API
-- Runs a research-and-analysis workflow powered by Google ADK + LiteLLM
-- Pulls financial and market data with yfinance
-- Scores recent headlines with VADER sentiment analysis
-- Returns a structured analysis response with result, findings, and timestamp
+- Single-ticker research service via `POST /v1/analyze-stock/`
+- Root `ResearchCoordinator` LLM agent orchestrates analysis
+- `analyse_ticker` tool fetches yfinance data, extracts financial metrics, scores news sentiment, generates a Python analysis script, and computes a verdict
+- `research_agent` sub-agent is available for web-based research and findings storage
+- In-memory session and result storage
+- API-key protected endpoint plus health checks
 
-## Features
+## Key features
 
-- FastAPI application with health and readiness endpoints
-- API-key protected analysis endpoint
-- In-memory session service and agent runner initialization
-- Structured logging and request/response middleware
+- FastAPI application with startup/shutdown lifecycle
+- API key validation using `X-API-Key`
+- Health endpoints for service & model readiness
+- Rotating file logging (`app.log` with backups)
+- In-memory result storage with basic LRU eviction
 - Test coverage for routes, utilities, ticker tools, and storage
+- Docker multi-stage image for container runtime
 
 ## Requirements
 
 - Python 3.10+
-- pip
+- `pip`
 - `requirements.txt`
-- `API_KEY` environment variable for request authorization
-- `GOOGLE_API_KEY` environment variable for Google ADK/LiteLLM
+- `API_KEY` environment variable for request authentication
+- `GOOGLE_API_KEY` environment variable for Google ADK / LiteLLM
+
+## Dependencies
+
+- fastapi
+- uvicorn
+- yfinance
+- nest_asyncio
+- vaderSentiment
+- protobuf==5.29.6
+- google-adk
+- litellm
+- pytest
+- pytest-mock
+- pytest-asyncio
+- pytest-benchmark
 
 ## Quick start
 
-1. Clone the repository
+1. Clone the repository:
 
 ```bash
 git clone <repository-url>
 cd stock-analyst
 ```
 
-2. Create and activate a virtual environment
+2. Create and activate a virtual environment:
 
 On macOS/Linux:
 
@@ -51,13 +69,13 @@ python -m venv venv
 .\venv\Scripts\Activate.ps1
 ```
 
-3. Install dependencies
+3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Create a `.env` file in the project root
+4. Create a `.env` file in the project root:
 
 ```env
 API_KEY=your-secret-api-key
@@ -69,17 +87,19 @@ HOST=0.0.0.0
 PORT=8080
 ```
 
-5. Start the app
+5. Start the application:
 
 ```bash
 python main.py
 ```
 
-Or with Uvicorn directly:
+Or start with Uvicorn directly:
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8080
 ```
+
+> Note: the Docker image exposes port `8501` internally, while local development uses the `PORT` environment variable (default `8080`).
 
 ## API usage
 
@@ -94,31 +114,30 @@ curl -X POST http://127.0.0.1:8080/v1/analyze-stock/ \
   -d '{"ticker":"AAPL"}'
 ```
 
-Example response:
+Request body schema:
 
 ```json
 {
-  "result": "A detailed analysis of the requested ticker.",
-  "findings": "Key findings from the research run.",
+  "ticker": "AAPL"
+}
+```
+
+Example response schema:
+
+```json
+{
+  "result": "<analysis text>",
+  "findings": "<research findings>",
   "status": "success",
   "timestamp": "2026-06-25T12:00:00"
 }
 ```
 
-### Endpoints
+### Health endpoints
 
-- POST `/v1/analyze-stock/` - Run stock analysis for a ticker
-- GET `/health` - Basic service health check
-- GET `/v1/health_runner` - Verify agent runner initialization
-- GET `/v1/health_model` - Verify model readiness
-
-## Testing
-
-Run the test suite with:
-
-```bash
-pytest tests/ -q
-```
+- `GET /health` - basic service health
+- `GET /v1/health_runner` - runner initialization status
+- `GET /v1/health_model` - model readiness status
 
 ## Project structure
 
@@ -131,36 +150,53 @@ stock-analyst/
 │   └── routes.py
 ├── system/
 │   ├── agents/
-│   │   └── finance_agent/
-│   │       ├── agent.py
-│   │       ├── tools.py
-│   │       └── tools_config/
-│   │           └── ticker_tools.py
+│   │   ├── finance_agent/
+│   │   │   ├── agent.py
+│   │   │   ├── tools.py
+│   │   │   ├── sub_agents.py
+│   │   │   ├── __init__.py
+│   │   │   ├── skills/
+│   │   │   │   ├── financial_analysis.md
+│   │   │   │   ├── standard guide.md
+│   │   │   │   └── visualizations.md
+│   │   │   └── tools_config/
+│   │   │       └── ticker_tools.py
 │   └── utility/
+│       ├── custom_exceptions.py
 │       ├── logger.py
-│       ├── schema.py
-│       ├── result_storage.py
-│       ├── utils.py
 │       ├── model.py
-│       └── custom_exceptions.py
+│       ├── result_storage.py
+│       ├── schema.py
+│       └── utils.py
 ├── tests/
-└── notebook/
+└── docs/
 ```
 
-## Notes
+## Notes and limitations
 
-- This implementation uses an in-memory session service and result store.
-- Agent output is streamed and the analysis workflow may take time due to external data lookups.
-- The app requires `GOOGLE_API_KEY` at startup; missing that variable causes initialization to fail.
+- The service uses an in-memory session service and result storage.
 - `API_KEY` is required for authenticated requests.
+- `GOOGLE_API_KEY` must be present at startup or the app fails to initialize.
+- Ticker input is validated as alphabetic only and limited to 6 characters.
+- Agent output is streamed, so analysis may take several seconds.
+- Docker defaults to `8501` inside the container.
+- `docs/PROJECT_ANALYSIS.md` contains a more detailed design and status assessment.
+
+## Testing
+
+Run the test suite with:
+
+```bash
+pytest tests/ -q
+```
 
 ## Docker
 
-Build and run the container with:
+Build and run the container:
 
 ```bash
 docker build -t stock-analyst:latest .
-docker run -p 8080:8080 --env-file .env stock-analyst:latest
+docker run -p 8501:8501 --env-file .env stock-analyst:latest
 ```
 
 ## License
