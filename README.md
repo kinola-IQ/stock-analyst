@@ -12,6 +12,8 @@ Stock Analyst is a FastAPI-based stock research service that uses Google ADK and
 - In-memory session and result storage
 - API-key protected endpoint plus health checks
 
+![system workflow diagram](https://github.com/kinola-IQ/stock-analyst/blob/d49f1bd61ee9b940cc9f447150f37e8311757d7b/docs/sytem%20workflow%20diagram.png)
+
 ## Key features
 
 - FastAPI application with startup/shutdown lifecycle
