@@ -2,7 +2,7 @@
 
 Stock Analyst is a FastAPI-based stock research service that uses Google ADK and LiteLLM to analyze a ticker symbol and return a structured research summary. The app combines yfinance market data, VADER sentiment scoring, and an agent-driven workflow to deliver a concise analysis with a buy/sell/hold recommendation.
 
-![system workflow diagram](https://github.com/kinola-IQ/stock-analyst/blob/d49f1bd61ee9b940cc9f447150f37e8311757d7b/docs/sytem%20workflow%20diagram.png)
+![interaction diagram](https://github.com/kinola-IQ/stock-analyst/blob/e3239e0cb148941faee317c25d5f49497d6f3f94/docs/non-technical%20user%E2%80%99s%20interaction.png)
 
 ## Current version overview
 
@@ -13,6 +13,8 @@ Stock Analyst is a FastAPI-based stock research service that uses Google ADK and
 - `coding_agent` sub-agent is a available for performing analytics according to available skills.
 - In-memory session and result storage
 - API-key protected endpoint plus health checks
+
+![system workflow diagram](https://github.com/kinola-IQ/stock-analyst/blob/d49f1bd61ee9b940cc9f447150f37e8311757d7b/docs/sytem%20workflow%20diagram.png)
 
 ## Key features
 
