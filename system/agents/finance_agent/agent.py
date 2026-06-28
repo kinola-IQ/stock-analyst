@@ -7,10 +7,10 @@ from google.adk.tools import FunctionTool
 
 # custom modules
 from ..finance_agent.tools import (
-    research_agent,
+
     analyse_ticker,
-    save_findings
 )
+from ..finance_agent.sub_agents import research_agent, coding_agent
 
 
 # model serving
@@ -58,8 +58,8 @@ def root_agent() -> LlmAgent:
     instruction_lines = [
         "You are a Research Coordinator responsible for independent, accurate research on the provided ticker.",
         "Maintain autonomy: choose the research approach, order of steps, and depth of investigation needed to meet the objective.",
-        "Use the ResearchAgent tool to gather relevant primary and secondary information about the ticker.",
-        "Save findings into a concise, factual research summary and save it using the save_findings tool.",
+        "Use the ResearchAgent sub agent to gather relevant primary and secondary information about the ticker.",
+        "Use the CodingAgent sub agent to perform analysis required if available tools return null or incomplete values",
         "Invoke the analyse_ticker tool to produce a quantitative financial analysis and key metrics.",
         "Synthesize research and analysis into a single, clear final summary for the user, highlighting conclusions and any important caveats.",
         "If data gaps or ambiguous results remain, note them explicitly in the final summary and recommend next steps.",
@@ -81,10 +81,7 @@ def root_agent() -> LlmAgent:
         model=AGENT_MODEL,
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
-        tools=[
-            FunctionTool(analyse_ticker),
-            FunctionTool(save_findings)
-            ],
+        tools=[FunctionTool(analyse_ticker),],
         output_key="final_summary",
         sub_agents=[research_agent()]
     )

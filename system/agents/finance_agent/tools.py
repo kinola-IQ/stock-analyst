@@ -1,8 +1,7 @@
 """ module to configure agent tools"""
-
-from google.adk.agents import Agent
-from google.adk.tools import google_search
+from pathlib import Path
 from typing import Dict, Any
+
 
 # custom modules
 # from ...utility.utils import retry_config
@@ -13,54 +12,7 @@ from .tools_config.ticker_tools import (
     score_news_sentiment,
     generate_analysis_script,
     decide_action)
-from ...utility import model
 
-
-
-# Research agent for websearching
-def research_agent() -> Agent:
-    """Create a research agent for web-based company investigation.
-
-    The agent uses Google Search to gather 2–3 concise, relevant facts about
-    the specified company, event, milestone, or market development, and returns
-    them with citations.
-
-    Args:
-        company (str): The research topic. Use a short, specific phrase such as
-            a company name, ticker symbol, product name, or recent business event.
-
-    Returns:
-        Agent: A configured research agent with Google Search access. The agent
-        is intended to be invoked by the root coordinator agent.
-
-    Raises:
-        RuntimeError: If the model cannot be loaded or required API keys are missing.
-    """
-    try:
-        AGENT_MODEL = model.get_model()
-    except Exception as exc:
-        # Surface a clearer error when model is not available
-        raise RuntimeError(
-            "LLM model not loaded; ensure API KEY is set and load_model() succeeded"
-        ) from exc
-
-    return Agent(
-        name="ResearchAgent",
-        model=AGENT_MODEL,
-        instruction=
-        """
-        You are a specialized research agent.
-
-        Use the google_search tool to find 2–3 relevant facts about:
-        {company}
-
-        Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary.
-        """.strip(),
-        tools=[google_search],
-        # The result of this agent will be stored in the session state
-        #  with this key.
-        output_key="research_findings"
-    )
 
 
 # Convenience wrapper that ties everything together
@@ -182,3 +134,30 @@ def save_findings(findings: str) -> str:
         return "saved"
     except Exception as err:
         return f"failed: {err}"
+    
+# accessing skills
+
+def read_skills(skill: str) -> str:
+    """
+    Extract instructions that serve as guiding skills.
+
+    Args:
+        skill (str): The skill name to retrieve.
+            Available skills include:
+            - visualizations
+            - financial_analysis
+    Raises:
+        ValueError: May raise value error exception if a non-existent skill is requested.
+        These are logged but may propagate up.
+    Returns:
+        str: The full text of the requested skill instructions.
+    """
+    if skill.lower() not in ['visualizations','financial_analysis']:
+        raise ValueError('invalid input, available skills are:' \
+                                        'visualizations ' \
+                                        'financial_analysis')
+    path = Path(f"system\agents\finance_agent\skills\{skill.lower()}.md")
+    return path.read_text(encoding="utf-8")
+
+def get_guardrails() -> str:
+    return read_skills('standard guide')
