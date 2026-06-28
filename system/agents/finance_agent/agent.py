@@ -83,5 +83,5 @@ def root_agent() -> LlmAgent:
         # wrapping subagent to make it a callable tool for the root agent
         tools=[FunctionTool(analyse_ticker),],
         output_key="final_summary",
-        sub_agents=[research_agent()]
+        sub_agents=[research_agent(), coding_agent()]
     )
