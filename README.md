@@ -1,7 +1,7 @@
 # Stock Analyst
 
 Stock Analyst is a FastAPI-based stock research service that uses an agent workflow to analyze a ticker symbol and return a structured research summary. The app combines financial data retrieval, sentiment analysis, and LLM-driven reasoning to produce a concise recommendation and supporting findings.
-
+![workflow](https://github.com/kinola-IQ/stock-analyst/blob/82bde9feba0b952787e8d7a569c58d42a68a685c/Originial%20Design%20Plan.png)
 ## What this project does
 
 - Accepts a stock ticker through a REST API
