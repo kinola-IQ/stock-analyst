@@ -1,20 +1,20 @@
 # Stock Analyst
 
-Stock Analyst is a FastAPI-based stock research service that uses an agent workflow to analyze a ticker symbol and return a structured research summary. The app combines financial data retrieval, sentiment analysis, and LLM-driven reasoning to produce a concise recommendation and supporting findings.
-![workflow](https://github.com/kinola-IQ/stock-analyst/blob/82bde9feba0b952787e8d7a569c58d42a68a685c/Originial%20Design%20Plan.png)
+Stock Analyst is a FastAPI-based stock research service that uses a Google ADK agent workflow to analyze a ticker symbol and return a structured research summary. The app integrates yfinance, VADER sentiment scoring, and LiteLLM to produce a concise recommendation and supporting findings.
+
 ## What this project does
 
 - Accepts a stock ticker through a REST API
-- Runs a research-and-analysis workflow powered by Google ADK and LiteLLM
-- Pulls financial data from yfinance
-- Scores recent news headlines with VADER sentiment analysis
-- Returns a structured response with the analysis text and findings
+- Runs a research-and-analysis workflow powered by Google ADK + LiteLLM
+- Pulls financial and market data with yfinance
+- Scores recent headlines with VADER sentiment analysis
+- Returns a structured analysis response with result, findings, and timestamp
 
 ## Features
 
-- FastAPI application with health endpoints
+- FastAPI application with health and readiness endpoints
 - API-key protected analysis endpoint
-- In-memory session and runner initialization for the agent workflow
+- In-memory session service and agent runner initialization
 - Structured logging and request/response middleware
 - Test coverage for routes, utilities, ticker tools, and storage
 
@@ -22,8 +22,9 @@ Stock Analyst is a FastAPI-based stock research service that uses an agent workf
 
 - Python 3.10+
 - pip
-- A valid API key for the service
-- A Google API key for the configured LLM runtime
+- `requirements.txt`
+- `API_KEY` environment variable for request authorization
+- `GOOGLE_API_KEY` environment variable for Google ADK/LiteLLM
 
 ## Quick start
 
@@ -35,6 +36,8 @@ cd stock-analyst
 ```
 
 2. Create and activate a virtual environment
+
+On macOS/Linux:
 
 ```bash
 python -m venv venv
@@ -54,7 +57,7 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-4. Create a .env file in the project root
+4. Create a `.env` file in the project root
 
 ```env
 API_KEY=your-secret-api-key
@@ -80,7 +83,7 @@ uvicorn main:app --host 0.0.0.0 --port 8080
 
 ## API usage
 
-All analysis requests require the X-API-Key header.
+All analysis requests require the `X-API-Key` header.
 
 ### Analyze a ticker
 
@@ -104,10 +107,10 @@ Example response:
 
 ### Endpoints
 
-- POST /v1/analyze-stock/ - Run stock analysis for a ticker
-- GET /health - Basic service health check
-- GET /v1/health_runner - Verify that the agent runner is initialized
-- GET /v1/health_model - Verify that the model layer is available
+- POST `/v1/analyze-stock/` - Run stock analysis for a ticker
+- GET `/health` - Basic service health check
+- GET `/v1/health_runner` - Verify agent runner initialization
+- GET `/v1/health_model` - Verify model readiness
 
 ## Testing
 
@@ -124,7 +127,6 @@ stock-analyst/
 ├── main.py
 ├── requirements.txt
 ├── Dockerfile
-├── docker-entrypoint.sh
 ├── Interface/
 │   └── routes.py
 ├── system/
@@ -147,9 +149,10 @@ stock-analyst/
 
 ## Notes
 
-- The current implementation uses an in-memory session service and result store.
-- The analysis workflow can take some time to complete because it streams agent output and performs external data lookups.
-- The model loader is configured around LiteLLM, so the runtime depends on the provider credentials supplied via environment variables.
+- This implementation uses an in-memory session service and result store.
+- Agent output is streamed and the analysis workflow may take time due to external data lookups.
+- The app requires `GOOGLE_API_KEY` at startup; missing that variable causes initialization to fail.
+- `API_KEY` is required for authenticated requests.
 
 ## Docker
 
