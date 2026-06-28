@@ -8,6 +8,7 @@ Stock Analyst is a FastAPI-based stock research service that uses Google ADK and
 - Root `ResearchCoordinator` LLM agent orchestrates analysis
 - `analyse_ticker` tool fetches yfinance data, extracts financial metrics, scores news sentiment, generates a Python analysis script, and computes a verdict
 - `research_agent` sub-agent is available for web-based research and findings storage
+- `coding_agent` sub-agent is a available for performing analytics according to available skills.
 - In-memory session and result storage
 - API-key protected endpoint plus health checks
 
