@@ -159,3 +159,4 @@ def health_check_model() -> dict:
         raise HTTPException(
             status_code=503, detail="Model unavailable"
             ) from exc
+

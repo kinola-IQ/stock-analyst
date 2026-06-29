@@ -97,7 +97,9 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
+@app.get("/health")
+def check_health() -> str:
+    return 'ok'
 
 if __name__ == '__main__':
     uvicorn.run('main:app', host=HOST, port=PORT)
