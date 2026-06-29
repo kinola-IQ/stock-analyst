@@ -6,7 +6,8 @@ nest_asyncio
 vaderSentiment
 protobuf==5.29.6 
 google-adk
-# google-adk[extensions] 
+# google-adk[extensions]
+langchain-experimental
 litellm
 # Development dependencies
 pytest
