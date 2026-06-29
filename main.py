@@ -4,8 +4,9 @@ import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -78,6 +79,19 @@ def create_app() -> FastAPI:
     """Create and configure the FastAPI app."""
     app = FastAPI(title=APP_NAME, lifespan=lifespan)
     register_http_logging(app)
+
+    # Mount static files directory for Vercel Speed Insights
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.get("/")
+    async def root():
+        """Serve the landing page with Vercel Speed Insights."""
+        static_file = os.path.join(os.path.dirname(__file__), "static", "index.html")
+        if os.path.exists(static_file):
+            return FileResponse(static_file)
+        return {"message": "Stock Analyst API", "docs": "/docs"}
 
     @app.get("/health")
     async def health_check():
