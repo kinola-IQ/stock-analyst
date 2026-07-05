@@ -128,9 +128,7 @@ def save_findings(findings: str) -> str:
     
     """
     try:
-        research_result.append(
-            {'findings': findings}
-            )
+        research_result[0] = {'findings': findings}
         return "saved"
     except Exception as err:
         return f"failed: {err}"
@@ -152,12 +150,58 @@ def read_skills(skill: str) -> str:
     Returns:
         str: The full text of the requested skill instructions.
     """
-    if skill.lower() not in ['visualizations','financial_analysis']:
+    if skill.lower() not in ['visualizations','financial_analysis', 'standard guide']:
         raise ValueError('invalid input, available skills are:' \
                                         'visualizations ' \
                                         'financial_analysis')
-    path = Path(f"system\agents\finance_agent\skills\{skill.lower()}.md")
+    path = Path("system") / "agents" / "finance_agent" / "skills" / f"{skill.lower()}.md"
     return path.read_text(encoding="utf-8")
+
+def save_plot(plot: str) -> str:
+    """Save the plot data to persistent storage.
+    
+    This tool is useful for storing the directory of plots generated. It's analysis, and conclusions
+    in a structured format that can be retrieved later.
+    
+    Args:
+        plot (str): The plot data to save.
+            Should be a comprehensive representation of the stock price over time, including any relevant annotations or highlights.
+            should also be the directory of the plot generated.
+    
+    Returns:
+        str: A status message indicating success or failure.
+             - returns 'saved' if the plot was appended to storage successfully.
+             - returns 'failed: <error>' if an exception occurs.
+    
+    """
+    try:
+        research_result[1] = {'plot': plot}
+        return "saved"
+    except Exception as err:
+        return f"failed: {err}"
 
 def get_guardrails() -> str:
     return read_skills('standard guide')
+
+# clear up assets and research results to avoid stale data
+def delete_assets() -> None:
+    """Delete only files inside subfolders of the assets folder, preserving empty subfolders."""
+    assets_dir = Path(__file__).resolve().parents[3] / "assets"
+    for subfolder in assets_dir.iterdir():
+        if subfolder.is_dir():
+            for item in subfolder.iterdir():
+                if item.is_file():
+                    item.unlink()
+                else:
+                    logger.warning("Skipping non-file item: %s", item)
+                    pass
+    logger.info("Cleared files inside subfolders of assets, preserving folder structure.")
+
+def clear_research_results() -> None:
+    """Clear the research results list."""
+    global research_result
+    if len(research_result) == 0:
+        logger.info("Research results already empty.")
+        return
+    research_result.clear()
+    logger.info("Cleared research results.")

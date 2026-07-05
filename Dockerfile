@@ -51,4 +51,4 @@ ENV SESSION_ID=default-session
 ENV HOST=127.0.0.1
 ENV PORT=8501
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8501", "--loop", "uvloop", "--workers", "1"]
+CMD ["uvicorn", "main:app", "--host", "127.0.0.1", "--port", "8501", "--loop", "uvloop", "--workers", "1"]

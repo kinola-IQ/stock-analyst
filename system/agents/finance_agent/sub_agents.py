@@ -7,6 +7,7 @@ from langchain_experimental.tools import PythonREPLTool
 from ...utility import model
 from ..finance_agent.tools import (
     save_findings,
+    save_plot,
     read_skills,
     get_guardrails
 )
@@ -45,17 +46,18 @@ def research_agent() -> Agent:
         """
         You are a specialized research agent.
 
-        Use the google_search tool to find 2–3 recent relevant facts about:
+        Use the google_search tool to find all recent relevant facts about:
         {company}
 
-        use the save_findings tool to store the full research results in memory.
+        use the `save_findings` tool to store the full research results in memory.
         Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary.
         
         """.strip(),
         tools=[google_search, FunctionTool(save_findings)],
         # The result of this agent will be stored in the session state
         #  with this key.
-        output_key="research_findings"
+        output_key="research_findings",
+        description="Agent focused on company research: gathers recent facts via search, stores findings, and returns concise, citation-backed summaries."
     )
 
 # subagent for conducting analysis
@@ -88,18 +90,20 @@ def coding_agent() -> Agent:
 
         Always:
 
-        1. Read the skill first.
+        1. Read the skill first using the `read_skills` tool.
         2. Follow every rule inside it.
         3. Produce executable Python code.
         4. Execute the code using Python REPL when needed.
         5. Explain the result.
+        6. Save the `plot` using the `save_plot` tool when needed.
         
         You MUST obey following guardrails below:
         {get_guardrails()}
         Generate and execute Python code.
         """.strip(),
-        tools=[PythonREPLTool, FunctionTool(read_skills)],
+        tools=[PythonREPLTool, FunctionTool(read_skills), FunctionTool(save_plot)],
         # The result of this agent will be stored in the session state
         #  with this key.
-        output_key="analytics_results"
-    )
+        output_key="analytics_results",
+        description="Agent specialized in analytics workflows: reads skills, executes Python code, and saves plots."
+)

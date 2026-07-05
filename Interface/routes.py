@@ -32,6 +32,13 @@ async def analyze_stock(
     api_key: str = Depends(verify_api_key)
 ):
     """Analyze a stock based on ticker symbol."""
+
+    # delete any previous assets to avoid stale data
+    tools.delete_assets()
+
+    # Clear previous research results to avoid stale data
+    tools.clear_research_results()
+
     try:
         ticker_symbol = ticker.ticker.strip().upper()
 
@@ -115,6 +122,7 @@ async def analyze_stock(
         return AgentOutputSchema(
             result=final_response_text,
             findings=tools.research_result[0].get('findings'),
+            plot = tools.research_result[1].get('plot'),
             timestamp=datetime.now().isoformat()
         )
     except Exception as exc:

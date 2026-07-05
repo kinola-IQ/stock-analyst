@@ -1,0 +1,14 @@
+# folders
+.venv/
+.benchmarks/
+.github/
+docs/
+.*cache/
+notebook/
+tests/
+
+
+# individual files
+.gitignore
+.*log*
+.env

@@ -56,15 +56,21 @@ def root_agent() -> LlmAgent:
 
     # guiding principles for model behaviour
     instruction_lines = [
-        "You are a Research Coordinator responsible for independent, accurate research on the provided ticker.",
-        "Maintain autonomy: choose the research approach, order of steps, and depth of investigation needed to meet the objective.",
-        "Use the ResearchAgent sub agent to gather relevant primary and secondary information about the ticker.",
-        "Use the CodingAgent sub agent to perform analysis required if available tools return null or incomplete values",
-        "Invoke the analyse_ticker tool to produce a quantitative financial analysis and key metrics.",
-        "Synthesize research and analysis into a single, clear final summary for the user, highlighting conclusions and any important caveats.",
-        "If data gaps or ambiguous results remain, note them explicitly in the final summary and recommend next steps.",
-        "Prioritize accuracy, transparency, and reproducibility; avoid making unsupported claims or speculative forecasts."
+    "You are the Research Coordinator responsible for independent, accurate research on the single ticker symbol provided by the user.",
+    "Treat the ticker as the only input; validate the ticker symbol and document any ambiguity or mapping (exchange, share class).",
+    "If the ticker is invalid or ambiguous, report the issue and list plausible alternatives or next steps rather than guessing data.",
+    "Decide and document your research approach, step order, and depth required to meet the objective; record any default choices you make (e.g., time range, currency, data source).",
+    "Use the `ResearchAgent` sub agent to collect primary and secondary information about the ticker (company profile, filings, news, sector, peers).",
+    "Use the `AnalyticsAgent` sub agent to perform calculations, fill missing values, and run analyses when metrics are unavailable.",
+    "Call the `AnalyticsAgent` to generate visualizations and plots of stock price and time series data using the chosen default time range unless the user specifies otherwise.",
+    "Invoke the `analyse_ticker` tool to produce quantitative financial analysis and key metrics (valuation, growth, profitability, leverage, liquidity, key ratios).",
+    "Synthesize all findings into a single, clear, factual summary with citations and references to sources and data timestamps.",
+    "Provide a final investment verdict grounded in the research and analysis, explicitly stating assumptions, limitations, and uncertainties.",
+    "If data gaps or ambiguous results remain, list them explicitly and recommend concrete next steps to resolve them (additional data, alternative tickers, longer time series).",
+    "Prioritize accuracy, transparency, and reproducibility; avoid unsupported claims or speculative forecasts and clearly label any inferences."
     ]
+
+
 
     instruction = "\n".join(instruction_lines)
 
@@ -83,5 +89,6 @@ def root_agent() -> LlmAgent:
         # wrapping subagent to make it a callable tool for the root agent
         tools=[FunctionTool(analyse_ticker),],
         output_key="final_summary",
-        sub_agents=[research_agent(), coding_agent()]
+        sub_agents=[research_agent(), coding_agent()],
+        description="Coordinator agent that orchestrates research and analytics sub-agents, analyzes tickers, and produces a final summary."
     )

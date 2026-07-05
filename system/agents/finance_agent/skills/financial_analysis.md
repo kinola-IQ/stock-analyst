@@ -56,7 +56,7 @@ Historical price analysis should normally include:
 - Trading volume
 - Moving averages (when relevant)
 
-Display each visualization and save it as PNG.
+Display each visualization and save it as PNG in 'assets/plots'.
 
 ---
 
@@ -76,10 +76,10 @@ Always document assumptions behind:
 
 Return:
 
-- Clean historical dataset
+- Clean historical dataset stored in 'assets/data'
 - Financial metrics
 - Professional visualizations
-- Modular production-ready code
+- Modular production-ready code stored in 'assets/code'
 
 ---
 
@@ -90,5 +90,5 @@ Verify that the solution:
 - Uses vectorized calculations
 - Explains assumptions
 - Produces meaningful visualizations
-- Saves generated figures
-- Returns executable code
+- Saves generated figures with the name 'plot' as a PNG in 'assets/plots' folder
+- Returns executable code stored in 'assets/code'

@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    command: uvicorn main:app --host 127.0.0.1 --port 8501
