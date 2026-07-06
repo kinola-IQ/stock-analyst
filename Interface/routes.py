@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import asyncio
-from fastapi import HTTPException, APIRouter, Request, Depends, Header
+from fastapi import FastAPI, HTTPException, APIRouter, Request, Depends, Header
 from google.genai import types
 
 from system.utility.schema import UserInputSchema, AgentOutputSchema
@@ -10,7 +10,9 @@ from system.utility.logger import logger
 from system.utility.utils import get_env
 from system.utility import model
 from system.agents.finance_agent import tools
-router = APIRouter()
+router = APIRouter(prefix="/v1")
+app = FastAPI()
+app.include_router(router)
 
 
 def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
@@ -119,10 +121,20 @@ async def analyze_stock(
         logger.info("Analysis completed: %s (%s) chars",
                         ticker_symbol, len(final_response_text))
 
+        research_payload = tools.research_result or {}
+        findings = None
+        plot = None
+        if isinstance(research_payload, dict):
+            findings = research_payload.get('findings')
+            plot = research_payload.get('plot')
+        elif isinstance(research_payload, list) and len(research_payload) > 0:
+            findings = research_payload[0].get('findings') if len(research_payload) > 0 else None
+            plot = research_payload[1].get('plot') if len(research_payload) > 1 else None
+
         return AgentOutputSchema(
             result=final_response_text,
-            findings=tools.research_result[0].get('findings'),
-            plot = tools.research_result[1].get('plot'),
+            findings=findings,
+            plot=plot,
             timestamp=datetime.now().isoformat()
         )
     except Exception as exc:

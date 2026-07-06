@@ -7,13 +7,21 @@ import logging
 import yfinance as yf
 from system.utility.utils import retry_on_exception
 
+try:
+    from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+except ImportError:  # pragma: no cover - optional dependency
+    SentimentIntensityAnalyzer = None
+
 logger = logging.getLogger(__name__)
 
 
 def _safe_get_ticker_attr(ticker, attr: str):
     """Safely get ticker attribute with error handling."""
     try:
-        return getattr(ticker, attr) or None
+        value = getattr(ticker, attr, None)
+        if value is None:
+            return None
+        return value
     except Exception:
         return None
 
@@ -180,7 +188,19 @@ def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "
         Missing data fields are set to None rather than raising exceptions.
         The function retries on network errors up to 3 times before failing.
     """
-    ticker = yf.Ticker(symbol)
+    try:
+        ticker = yf.Ticker(symbol)
+    except Exception as exc:
+        return {
+            "symbol": symbol.upper(),
+            "company": symbol.upper(),
+            "info": {},
+            "financials": None,
+            "balance_sheet": None,
+            "news": [],
+            "history": None,
+            "error": str(exc),
+        }
     
     # Basic info
     try:
@@ -303,13 +323,14 @@ def score_news_sentiment(headlines: List[str]) -> float:
     
     # Try VADER
     try:
-        from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+        if SentimentIntensityAnalyzer is None:
+            raise ImportError
         analyzer = SentimentIntensityAnalyzer()
         scores = [analyzer.polarity_scores(h).get("compound", 0.0) for h in headlines if h]
         return float(sum(scores) / len(scores)) if scores else 0.0
-    except ImportError:
+    except Exception:
         pass
-    
+
     # Fallback: simple word-based sentiment
     POS = {"good", "great", "positive", "beat", "beats", "up", "gain", "gains", "growth", "strong", 
            "profit", "profits", "outperform", "surge", "rally", "excellent", "bullish", "boost"}
@@ -332,8 +353,9 @@ def score_news_sentiment(headlines: List[str]) -> float:
     return float(total_score / count) if count > 0 else 0.0
 
 
-def generate_analysis_script(symbol: str, metrics: Dict[str, Any], headlines: List[str],
-                             sentiment_score: float, filename: Optional[str] = None) -> str:
+def generate_analysis_script(symbol_or_metrics: Any, metrics_or_headlines: Optional[Any] = None,
+                             sentiment_score_or_symbol: Optional[Any] = None,
+                             symbol: Optional[str] = None, filename: Optional[str] = None) -> str:
     """Generate a Python analysis script with company data and findings.
     
     Creates a complete, executable Python script that documents the analysis
@@ -367,15 +389,26 @@ def generate_analysis_script(symbol: str, metrics: Dict[str, Any], headlines: Li
         script = generate_analysis_script("AAPL", metrics, headlines, 0.45)
         # Returns a complete Python script as a string
     """
+    if isinstance(symbol_or_metrics, dict):
+        metrics = symbol_or_metrics
+        headlines = metrics_or_headlines or []
+        sentiment_score = sentiment_score_or_symbol or 0.0
+        symbol_value = symbol or "UNKNOWN"
+    else:
+        symbol_value = str(symbol_or_metrics).upper()
+        metrics = metrics_or_headlines or {}
+        headlines = sentiment_score_or_symbol or []
+        sentiment_score = symbol or 0.0
+
     if filename is None:
-        filename = f"{symbol.upper()}_analysis.py"
+        filename = f"{symbol_value.upper()}_analysis.py"
 
     script_lines = [
         "import yfinance as yf",
         "import pandas as pd",
         "from datetime import datetime",
         "",
-        f"symbol = {repr(symbol.upper())}",
+        f"symbol = {repr(symbol_value.upper())}",
         "t = yf.Ticker(symbol)",
         "info = t.info",
         "print('Company:', info.get('longName') or info.get('shortName') or symbol)",

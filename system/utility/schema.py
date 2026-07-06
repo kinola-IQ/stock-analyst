@@ -1,5 +1,6 @@
 """Schema definitions for API endpoints."""
 
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -20,7 +21,7 @@ class UserInputSchema(BaseModel):
 class AgentOutputSchema(BaseModel):
     """Agent response schema."""
     result: str = Field(..., description="full breadth of analysis carried out")
-    findings: str = Field(...,description="findings of the entire reasearch operation")
-    plot: str = Field(..., description="plot of the stock price over time")
+    findings: Optional[str] = Field(default=None, description="findings of the entire reasearch operation")
+    plot: Optional[str] = Field(default=None, description="plot of the stock price over time")
     status: str = Field(default="success", description="Response status")
     timestamp: str = Field(..., description="Timestamp of analysis")

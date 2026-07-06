@@ -7,8 +7,9 @@ from google.adk.tools import FunctionTool
 
 # custom modules
 from ..finance_agent.tools import (
-
     analyse_ticker,
+    save_findings,
+    save_plot,
 )
 from ..finance_agent.sub_agents import research_agent, coding_agent
 
@@ -87,7 +88,9 @@ def root_agent() -> LlmAgent:
         model=AGENT_MODEL,
         instruction=instruction,
         # wrapping subagent to make it a callable tool for the root agent
-        tools=[FunctionTool(analyse_ticker),],
+        tools=[
+            FunctionTool(analyse_ticker),
+        ],
         output_key="final_summary",
         sub_agents=[research_agent(), coding_agent()],
         description="Coordinator agent that orchestrates research and analytics sub-agents, analyzes tickers, and produces a final summary."

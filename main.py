@@ -91,7 +91,7 @@ def create_app() -> FastAPI:
         return PlainTextResponse(msg, status_code=422)
 
     # Include API routes
-    app.include_router(router, prefix="/v1")
+    app.include_router(router)
 
     return app
 

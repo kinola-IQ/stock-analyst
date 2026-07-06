@@ -2,7 +2,8 @@
 import pytest
 from unittest.mock import Mock, patch
 from system.agents.finance_agent.agent import root_agent
-from system.agents.finance_agent.tools import research_agent, analyse_ticker
+from system.agents.finance_agent import tools as finance_tools
+from system.agents.finance_agent.tools import analyse_ticker
 
 
 class TestResearchAgent:
@@ -14,7 +15,7 @@ class TestResearchAgent:
         mock_agent.return_value = mock_agent_instance
         mock_get_model.return_value = 'fake-model'
 
-        result = research_agent()
+        result = finance_tools.research_agent()
 
         assert result == mock_agent_instance
         mock_agent.assert_called_once()
@@ -41,6 +42,16 @@ class TestRootAgent:
         assert 'log_tool' not in tool_names
         assert 'analyse_ticker' in tool_names
         assert 'save_findings' in tool_names
+
+
+class TestResearchResultStorage:
+    def test_save_findings_and_plot_store_values(self):
+        finance_tools.clear_research_results()
+
+        assert finance_tools.save_findings('findings') == 'saved'
+        assert finance_tools.save_plot('plot') == 'saved'
+        assert finance_tools.research_result['findings'] == 'findings'
+        assert finance_tools.research_result['plot'] == 'plot'
 
 
 class TestAnalyseTicker:

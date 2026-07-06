@@ -1,4 +1,5 @@
 """Tests for ticker_tools.py"""
+import pandas as pd
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from system.agents.finance_agent.tools_config.ticker_tools import (
@@ -45,6 +46,21 @@ class TestFetchCompanyData:
 
         assert result['symbol'] == 'INVALID'
         assert result['error'] == 'API error'
+
+    @patch('system.agents.finance_agent.tools_config.ticker_tools.yf')
+    def test_fetch_company_data_keeps_financial_dataframes(self, mock_yf):
+        mock_ticker = Mock()
+        mock_ticker.info = {}
+        mock_ticker.financials = pd.DataFrame({'2023': [1]}, index=['Revenue'])
+        mock_ticker.balance_sheet = pd.DataFrame({'2023': [1]}, index=['Total Debt'])
+        mock_ticker.news = []
+        mock_ticker.history.return_value = pd.DataFrame({'Close': [100.0]})
+        mock_yf.Ticker.return_value = mock_ticker
+
+        result = fetch_company_data('AAPL')
+
+        assert result['financials'] is mock_ticker.financials
+        assert result['balance_sheet'] is mock_ticker.balance_sheet
 
 
 class TestExtractFinancialMetrics:

@@ -2,9 +2,12 @@
 from pathlib import Path
 from typing import Dict, Any
 
+from google.adk.agents import Agent
+from google.adk.tools import google_search, FunctionTool
 
 # custom modules
 # from ...utility.utils import retry_config
+from ...utility import model
 from ...utility.logger import logger
 from .tools_config.ticker_tools import (
     fetch_company_data,
@@ -107,7 +110,30 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
 
 
 # save summary of search results
-research_result = []
+research_result: Dict[str, Any] = {}
+
+
+def research_agent() -> Agent:
+    """Create a research agent for web-based company investigation."""
+    try:
+        agent_model = model.get_model()
+    except Exception as exc:
+        raise RuntimeError(
+            "LLM model not loaded; ensure API KEY is set and load_model() succeeded"
+        ) from exc
+
+    return Agent(
+        name="ResearchAgent",
+        model=agent_model,
+        instruction=(
+            "You are a specialized research agent.\n\n"
+            "Use the google_search tool to find relevant facts about the company.\n"
+            "Use the save_findings tool to store the full research results in memory."
+        ),
+        tools=[google_search, FunctionTool(save_findings)],
+        output_key="research_findings",
+        description="Agent focused on company research: gathers recent facts via search, stores findings, and returns concise, citation-backed summaries.",
+    )
 
 
 def save_findings(findings: str) -> str:
@@ -128,7 +154,7 @@ def save_findings(findings: str) -> str:
     
     """
     try:
-        research_result[0] = {'findings': findings}
+        research_result['findings'] = findings
         return "saved"
     except Exception as err:
         return f"failed: {err}"
@@ -175,7 +201,7 @@ def save_plot(plot: str) -> str:
     
     """
     try:
-        research_result[1] = {'plot': plot}
+        research_result['plot'] = plot
         return "saved"
     except Exception as err:
         return f"failed: {err}"
@@ -198,10 +224,16 @@ def delete_assets() -> None:
     logger.info("Cleared files inside subfolders of assets, preserving folder structure.")
 
 def clear_research_results() -> None:
-    """Clear the research results list."""
+    """Clear the research results dictionary."""
     global research_result
-    if len(research_result) == 0:
+    if not research_result:
         logger.info("Research results already empty.")
         return
     research_result.clear()
     logger.info("Cleared research results.")
+
+
+def research_agent_compat():
+    """Compatibility wrapper for the research sub-agent."""
+    from .sub_agents import research_agent as _research_agent
+    return _research_agent()
