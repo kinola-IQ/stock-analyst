@@ -44,7 +44,7 @@ When historical price data is available, compute relevant metrics such as:
 - High/Low ranges
 - Drawdowns
 
-Only calculate metrics relevant to the user's request.
+Only calculate metrics relevant to the research coordinator's request.
 
 ---
 
@@ -56,7 +56,7 @@ Historical price analysis should normally include:
 - Trading volume
 - Moving averages (when relevant)
 
-Display each visualization and save it as PNG in 'assets/plots'.
+Display each visualization and save it as PNG in a folder accessible via an available tool.
 
 ---
 
@@ -76,10 +76,7 @@ Always document assumptions behind:
 
 Return:
 
-- Clean historical dataset stored in 'assets/data'
-- Financial metrics
-- Professional visualizations
-- Modular production-ready code stored in 'assets/code'
+- professional assessment and explained assumptions based on analytics operation performed, to be saved to output key 
 
 ---
 
@@ -89,6 +86,4 @@ Verify that the solution:
 
 - Uses vectorized calculations
 - Explains assumptions
-- Produces meaningful visualizations
-- Saves generated figures with the name 'plot' as a PNG in 'assets/plots' folder
-- Returns executable code stored in 'assets/code'
+- saved professional assessment and explained assumptions to output key

@@ -9,7 +9,8 @@ from ..finance_agent.tools import (
     save_findings,
     save_plot,
     read_skills,
-    get_guardrails
+    get_guardrails,
+    get_plots_dir
 )
 
 # Research agent for websearching
@@ -101,7 +102,7 @@ def coding_agent() -> Agent:
         {get_guardrails()}
         Generate and execute Python code.
         """.strip(),
-        tools=[PythonREPLTool, FunctionTool(read_skills), FunctionTool(save_plot)],
+        tools=[PythonREPLTool, FunctionTool(read_skills), FunctionTool(save_plot), FunctionTool(get_plots_dir)],
         # The result of this agent will be stored in the session state
         #  with this key.
         output_key="analytics_results",

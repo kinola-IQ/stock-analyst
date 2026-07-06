@@ -3,16 +3,17 @@
 from typing import Dict, Any, List, Optional
 import datetime
 import json
-import logging
+import pandas as pd
+
 import yfinance as yf
 from system.utility.utils import retry_on_exception
+from system.utility.logger import logger
+
 
 try:
     from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 except ImportError:  # pragma: no cover - optional dependency
     SentimentIntensityAnalyzer = None
-
-logger = logging.getLogger(__name__)
 
 
 def _safe_get_ticker_attr(ticker, attr: str):
@@ -24,6 +25,41 @@ def _safe_get_ticker_attr(ticker, attr: str):
         return value
     except Exception:
         return None
+
+# returns None safely when conversion is not possible
+def _to_optional_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+    
+# preprocess dataframes to ensure they have proper index
+
+def _preprocess_dataframe(df):
+    """Ensure DataFrame has a proper index and standardized format."""
+    if df is None or not hasattr(df, "empty") or df.empty:
+        return None
+    
+    df = df.copy()
+    
+    # Reset index to avoid duplicate/messy indices
+    df.reset_index(drop=True, inplace=True)
+    
+    # Ensure the first column is treated as index if appropriate
+    if df.shape[1] > 1:
+        df.set_index(df.columns[0], inplace=True)
+    
+    # Transpose for consistency
+    df = df.T
+    
+    # Reset index and rename the first column to 'Date'
+    df.reset_index(inplace=True)
+    df.rename(columns={df.columns[0]: "Date"}, inplace=True)
+    
+    return df.iloc[:-1]  # Exclude the last row if it's a summary or empty row
+
 
 # implementing fallback for Financial extraction
 def _first_numeric(*values):
@@ -78,7 +114,12 @@ def _get_dataframe_row(df, candidates: List[str]):
 
 def _extract_price_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
     """Extract price-related metrics."""
-    metrics = {"current_price": None, "trailing_pe": None, "forward_pe": None, "market_cap": None}
+    metrics : dict[str, Optional[float]] = {
+        "current_price": None,
+        "trailing_pe": None,
+        "forward_pe": None,
+        "market_cap": None,
+        }
     info = data.get("info", {}) or {}
     
     try:
@@ -86,22 +127,19 @@ def _extract_price_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
         if hist is not None and hasattr(hist, "empty") and not hist.empty:
             metrics["current_price"] = float(hist["Close"].iloc[-1])
         elif info.get("currentPrice"):
-            metrics["current_price"] = float(info.get("currentPrice"))
+            metrics["current_price"] = _to_optional_float(info.get("currentPrice"))
     except Exception:
         pass
     
     metrics["trailing_pe"] = _first_numeric(info.get("trailingPE"))
     metrics["forward_pe"] = _first_numeric(info.get("forwardPE"))
     metrics["market_cap"] = _first_numeric(info.get("marketCap"))
-    metrics["total_debt"] = _first_numeric(info.get("totalDebt"), info.get("debt"))
-    metrics["total_equity"] = _first_numeric(info.get("totalStockholderEquity"), info.get("totalEquity"))
-    metrics["debt_to_equity"] = _first_numeric(info.get("debtToEquity"))
     return metrics
 
 
 def _extract_revenue_metrics(fin) -> Dict[str, Optional[float]]:
     """Extract revenue-related metrics."""
-    metrics = {"revenue": None, "net_income": None, "revenue_growth_pct": None}
+    metrics: dict[str, Optional[float]] = {"revenue": None, "net_income": None, "revenue_growth_pct": None}
     if fin is None or not hasattr(fin, "empty") or fin.empty:
         return metrics
     
@@ -121,8 +159,8 @@ def _extract_revenue_metrics(fin) -> Dict[str, Optional[float]]:
                 if name in fin.index:
                     row = fin.loc[name]
                     if len(row) >= 2:
-                        rev_new = float(row.iloc[-1]) if row.iloc[-1] is not None else None
-                        rev_old = float(row.iloc[-2]) if row.iloc[-2] is not None else None
+                        rev_new = float(row.iloc[0]) if row.iloc[0] is not None else None
+                        rev_old = float(row.iloc[1]) if row.iloc[1] is not None else None
                         if rev_new is not None and rev_old not in (None, 0):
                             metrics["revenue_growth_pct"] = ((rev_new - rev_old) / abs(rev_old)) * 100.0
                     break
@@ -134,7 +172,7 @@ def _extract_revenue_metrics(fin) -> Dict[str, Optional[float]]:
 
 def _extract_debt_metrics(bal) -> Dict[str, Optional[float]]:
     """Extract debt and equity metrics."""
-    metrics = {"total_debt": None, "total_equity": None, "debt_to_equity": None}
+    metrics: dict[str, Optional[float]] = {"total_debt": None, "total_equity": None, "debt_to_equity": None}
     if bal is None or not hasattr(bal, "empty") or bal.empty:
         return metrics
     
@@ -214,6 +252,10 @@ def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "
     financials = _safe_get_ticker_attr(ticker, "financials")
     balance_sheet = _safe_get_ticker_attr(ticker, "balance_sheet")
     
+    # preprocess dataframes to ensure they are not empty and have proper index
+    financials = _preprocess_dataframe(financials)
+    balance_sheet = _preprocess_dataframe(balance_sheet)
+    
     # News
     news = _parse_news(ticker, top_n_news)
     
@@ -235,7 +277,7 @@ def fetch_company_data(symbol: str, top_n_news: int = 5, history_period: str = "
     }
 
 
-def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
+def extract_financial_metrics(data: dict) -> Dict[str, Optional[float]]:
     """Extract comprehensive financial metrics from company data.
     
     Processes company data fetched from yfinance and extracts key financial
@@ -268,7 +310,7 @@ def extract_financial_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]
         Missing metrics are set to None rather than raising exceptions.
         Extraction failures are logged at DEBUG level.
     """
-    metrics = {
+    metrics: dict[str, Optional[float]] = {
         "current_price": None,
         "trailing_pe": None,
         "forward_pe": None,
@@ -353,85 +395,8 @@ def score_news_sentiment(headlines: List[str]) -> float:
     return float(total_score / count) if count > 0 else 0.0
 
 
-def generate_analysis_script(symbol_or_metrics: Any, metrics_or_headlines: Optional[Any] = None,
-                             sentiment_score_or_symbol: Optional[Any] = None,
-                             symbol: Optional[str] = None, filename: Optional[str] = None) -> str:
-    """Generate a Python analysis script with company data and findings.
-    
-    Creates a complete, executable Python script that documents the analysis
-    performed on a stock. The script includes company data, extracted metrics,
-    news headlines, sentiment scores, and can be extended with further analysis.
-    
-    Args:
-        symbol (str): The stock ticker symbol (will be uppercase).
-        metrics (Dict[str, Any]): Dictionary of extracted financial metrics.
-        headlines (List[str]): List of news headlines to include in the script.
-        sentiment_score (float): The calculated sentiment score (-1.0 to 1.0).
-        filename (Optional[str]): Name for the generated script file.
-                                 Defaults to "{SYMBOL}_analysis.py".
-    
-    Returns:
-        str: A complete Python script as a multi-line string that:
-             - Imports necessary libraries
-             - Defines the ticker symbol
-             - Fetches company info
-             - Prints current stock price
-             - Outputs metrics snapshot
-             - Lists recent headlines
-             - Displays sentiment score
-             - Provides template for further analysis
-    
-    Note:
-        The returned script is ready to execute and can be extended with
-        additional analysis, visualizations, backtests, or data exports.
-    
-    Example:
-        script = generate_analysis_script("AAPL", metrics, headlines, 0.45)
-        # Returns a complete Python script as a string
-    """
-    if isinstance(symbol_or_metrics, dict):
-        metrics = symbol_or_metrics
-        headlines = metrics_or_headlines or []
-        sentiment_score = sentiment_score_or_symbol or 0.0
-        symbol_value = symbol or "UNKNOWN"
-    else:
-        symbol_value = str(symbol_or_metrics).upper()
-        metrics = metrics_or_headlines or {}
-        headlines = sentiment_score_or_symbol or []
-        sentiment_score = symbol or 0.0
 
-    if filename is None:
-        filename = f"{symbol_value.upper()}_analysis.py"
-
-    script_lines = [
-        "import yfinance as yf",
-        "import pandas as pd",
-        "from datetime import datetime",
-        "",
-        f"symbol = {repr(symbol_value.upper())}",
-        "t = yf.Ticker(symbol)",
-        "info = t.info",
-        "print('Company:', info.get('longName') or info.get('shortName') or symbol)",
-        "hist = t.history(period='1y')",
-        "print('Latest close:', hist['Close'].iloc[-1] if not hist.empty else info.get('currentPrice'))",
-        "print('Generated metrics snapshot:')",
-        f"metrics_snapshot = {json.dumps(metrics, default=str)}",
-        "print(metrics_snapshot)",
-        "",
-        "print('Recent headlines:')",
-        f"headlines = {json.dumps(headlines)}",
-        "for h in headlines:",
-        "    print('-', h)",
-        "",
-        f"print('Sentiment score:', {sentiment_score})",
-        "",
-        "# Add further analysis: ratio calculations, visualizations, backtests, or export results.",
-        "print('Script generated on', datetime.utcnow().isoformat())",
-    ]
-    return "\n".join(script_lines)
-
-
-def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: str,
+def decide_action(metrics: Dict[str, Any], sentiment_score: float,
                   thresholds: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
     """Apply decision rules to financial metrics and generate a BUY/SELL/HOLD verdict.
     
@@ -450,7 +415,6 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
                                  - forward_pe (float): Forward P/E ratio
         sentiment_score (float): Overall sentiment score (-1.0 to 1.0) from
                                news headline analysis.
-        script_text (str): Generated analysis script (stored in results for reference).
         thresholds (Optional[Dict[str, float]]): Custom decision thresholds. Defaults:
                                                 - revenue_growth_good_pct: 5.0
                                                 - revenue_growth_bad_pct: -5.0
@@ -469,7 +433,6 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
             - pos_signals (int): Count of positive indicators
             - neg_signals (int): Count of negative indicators
             - reasons (List[str]): Detailed list of factors influencing the decision
-            - script (str): The input script for reference
     
     Scoring Rules:
         Positive factors (+1 each):
@@ -487,7 +450,7 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
             - P/E ratio > pe_high (overvalued)
     
     Example:
-        decision = decide_action(metrics, 0.3, script_text)
+        decision = decide_action(metrics, 0.3)
         print(f"Verdict: {decision['verdict']}")  # Output: "BUY"
         print(f"Reasons: {decision['reasons']}")  # List of factors
     """
@@ -597,5 +560,4 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
         "pos_signals": pos,
         "neg_signals": neg,
         "reasons": reasons,
-        "script": script_text
     }

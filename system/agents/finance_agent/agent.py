@@ -65,6 +65,7 @@ def root_agent() -> LlmAgent:
     "Use the `AnalyticsAgent` sub agent to perform calculations, fill missing values, and run analyses when metrics are unavailable.",
     "Call the `AnalyticsAgent` to generate visualizations and plots of stock price and time series data using the chosen default time range unless the user specifies otherwise.",
     "Invoke the `analyse_ticker` tool to produce quantitative financial analysis and key metrics (valuation, growth, profitability, leverage, liquidity, key ratios).",
+    "Invoke the `save_plot` tool to persist any generated plots to the assets folder for later reference.",
     "Synthesize all findings into a single, clear, factual summary with citations and references to sources and data timestamps.",
     "Provide a final investment verdict grounded in the research and analysis, explicitly stating assumptions, limitations, and uncertainties.",
     "If data gaps or ambiguous results remain, list them explicitly and recommend concrete next steps to resolve them (additional data, alternative tickers, longer time series).",
@@ -90,6 +91,7 @@ def root_agent() -> LlmAgent:
         # wrapping subagent to make it a callable tool for the root agent
         tools=[
             FunctionTool(analyse_ticker),
+            FunctionTool(save_plot)
         ],
         output_key="final_summary",
         sub_agents=[research_agent(), coding_agent()],

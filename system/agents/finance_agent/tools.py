@@ -9,11 +9,11 @@ from google.adk.tools import google_search, FunctionTool
 # from ...utility.utils import retry_config
 from ...utility import model
 from ...utility.logger import logger
+from ...utility.constants import ASSETS_DIR, SYSTEMS_DIR
 from .tools_config.ticker_tools import (
     fetch_company_data,
     extract_financial_metrics,
     score_news_sentiment,
-    generate_analysis_script,
     decide_action)
 
 
@@ -94,8 +94,23 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
             headlines.append(str(item))
 
     sentiment = score_news_sentiment(headlines)
-    script = generate_analysis_script(symbol, metrics, headlines, sentiment,)
-    decision = decide_action(metrics, sentiment, script)
+    decision = decide_action(metrics, sentiment)
+
+    # save history plot to assets folder
+    try:
+        history = data.get("history", {}).reset_index()
+        history.columns = [col.lower() for col in history.columns]
+        history = history.set_index('date')
+        # Save the plot to the assets folder
+        plot_path = ASSETS_DIR / "plots" / f"{symbol.upper()}_stock_price_history.png"
+        history[['open', 'high', 'low', 'close']].plot(
+            title=f"{symbol.upper()} Stock Price History",
+            figsize=(12, 6)
+        ).get_figure().savefig(plot_path)
+        logger.info("Saved stock price history plot to: %s", plot_path)
+    except Exception as exc:
+        logger.warning("Failed to generate plot: %s", exc)
+
     result = {
         "symbol": symbol.upper(),
         "company": data.get("company"),
@@ -104,37 +119,13 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
         "sentiment_score": sentiment,
         "verdict": decision["verdict"],
         "verdict_details": decision,
-        "script": script
+        "plot_path": str(plot_path)
     }
     return result
 
 
-# save summary of search results
+# save results to persistent storage for later retrieval
 research_result: Dict[str, Any] = {}
-
-
-def research_agent() -> Agent:
-    """Create a research agent for web-based company investigation."""
-    try:
-        agent_model = model.get_model()
-    except Exception as exc:
-        raise RuntimeError(
-            "LLM model not loaded; ensure API KEY is set and load_model() succeeded"
-        ) from exc
-
-    return Agent(
-        name="ResearchAgent",
-        model=agent_model,
-        instruction=(
-            "You are a specialized research agent.\n\n"
-            "Use the google_search tool to find relevant facts about the company.\n"
-            "Use the save_findings tool to store the full research results in memory."
-        ),
-        tools=[google_search, FunctionTool(save_findings)],
-        output_key="research_findings",
-        description="Agent focused on company research: gathers recent facts via search, stores findings, and returns concise, citation-backed summaries.",
-    )
-
 
 def save_findings(findings: str) -> str:
     """Save the research findings to persistent storage.
@@ -158,41 +149,14 @@ def save_findings(findings: str) -> str:
         return "saved"
     except Exception as err:
         return f"failed: {err}"
-    
-# accessing skills
-
-def read_skills(skill: str) -> str:
-    """
-    Extract instructions that serve as guiding skills.
-
-    Args:
-        skill (str): The skill name to retrieve.
-            Available skills include:
-            - visualizations
-            - financial_analysis
-    Raises:
-        ValueError: May raise value error exception if a non-existent skill is requested.
-        These are logged but may propagate up.
-    Returns:
-        str: The full text of the requested skill instructions.
-    """
-    if skill.lower() not in ['visualizations','financial_analysis', 'standard guide']:
-        raise ValueError('invalid input, available skills are:' \
-                                        'visualizations ' \
-                                        'financial_analysis')
-    path = Path("system") / "agents" / "finance_agent" / "skills" / f"{skill.lower()}.md"
-    return path.read_text(encoding="utf-8")
 
 def save_plot(plot: str) -> str:
-    """Save the plot data to persistent storage.
+    """Save the plot path to persistent storage.
     
-    This tool is useful for storing the directory of plots generated. It's analysis, and conclusions
-    in a structured format that can be retrieved later.
+    This tool is useful for storing the directory of the plot generated so that it can be retrieved later.
     
     Args:
-        plot (str): The plot data to save.
-            Should be a comprehensive representation of the stock price over time, including any relevant annotations or highlights.
-            should also be the directory of the plot generated.
+        plot (str): The plot path to save to persistent storage.
     
     Returns:
         str: A status message indicating success or failure.
@@ -206,8 +170,44 @@ def save_plot(plot: str) -> str:
     except Exception as err:
         return f"failed: {err}"
 
+    
+# accessing skills
+
+def read_skills(skill: str) -> str:
+    """
+    Extract instructions that serve as guiding skills.
+
+    Args:
+        skill (str): The skill name to retrieve.
+            Available skills include:
+            - visualizations: for generating plots and visualizations of stock price and time series data
+            - financial_analysis: for performing quantitative financial analysis and key metrics calculations
+    Raises:
+        ValueError: May raise value error exception if a non-existent skill is requested.
+        These are logged but may propagate up.
+    Returns:
+        str: The full text of the requested skill instructions.
+    """
+    if skill.lower() not in ['visualizations','financial_analysis', 'standard guide']:
+        raise ValueError('invalid input, available skills are:' \
+                                        'visualizations ' \
+                                        'financial_analysis')
+    path = SYSTEMS_DIR / "agents" / "finance_agent" / "skills" / f"{skill.lower()}.md"
+    return path.read_text(encoding="utf-8")
+
+
+# accessing external files
 def get_guardrails() -> str:
     return read_skills('standard guide')
+
+def get_plots_dir() -> Path:
+    """
+    Return the path to the plots directory.
+    This function provides a convenient way to access the directory where generated plots are stored.
+    Returns:
+        Path: The path to the plots directory.
+    """
+    return ASSETS_DIR / "plots"
 
 # clear up assets and research results to avoid stale data
 def delete_assets() -> None:
@@ -231,9 +231,3 @@ def clear_research_results() -> None:
         return
     research_result.clear()
     logger.info("Cleared research results.")
-
-
-def research_agent_compat():
-    """Compatibility wrapper for the research sub-agent."""
-    from .sub_agents import research_agent as _research_agent
-    return _research_agent()

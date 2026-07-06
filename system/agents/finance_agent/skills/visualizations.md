@@ -48,8 +48,7 @@ For time-series data:
 
 Always:
 
-- Display the figure.
-- Save the figure as PNG.
+- Save the figure as PNG in the dir accessible via an available tool
 - Use descriptive filenames.
 
 Examples:
