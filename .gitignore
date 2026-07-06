@@ -6,3 +6,5 @@ Originial Design Plan.png
 /.venv
 /.pytest_cache
 /.benchmarks
+.vercel
+.env*
