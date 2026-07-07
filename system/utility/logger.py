@@ -1,19 +1,10 @@
 """module to log system events"""
 import logging
 import time
-from logging.handlers import RotatingFileHandler
-
-# Create a rotating file handler
-handler = RotatingFileHandler(
-    "app.log",        # log file name
-    maxBytes=100000,    # rotate after ~100KB
-    backupCount=5     # keep 5 old log files
-)
 
 logging.basicConfig(
-    level=logging.DEBUG,  # log all levels DEBUG and above
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[handler]
+    level=logging.INFO,  # log all levels INFO and above
+    format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 # instantiating logger
