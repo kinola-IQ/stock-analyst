@@ -8,3 +8,4 @@ Originial Design Plan.png
 /.benchmarks
 .vercel
 .env*
+*logger*
