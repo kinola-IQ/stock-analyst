@@ -38,27 +38,19 @@ def _to_optional_float(value: Any) -> Optional[float]:
 # preprocess dataframes to ensure they have proper index
 
 def _preprocess_dataframe(df):
-    """Ensure DataFrame has a proper index and standardized format."""
+    """Normalize a financial statement DataFrame without destroying row labels."""
     if df is None or not hasattr(df, "empty") or df.empty:
         return None
-    
+
     df = df.copy()
-    
-    # Reset index to avoid duplicate/messy indices
-    df.reset_index(drop=True, inplace=True)
-    
-    # Ensure the first column is treated as index if appropriate
-    if df.shape[1] > 1:
-        df.set_index(df.columns[0], inplace=True)
-    
-    # Transpose for consistency
-    df = df.T
-    
-    # Reset index and rename the first column to 'Date'
-    df.reset_index(inplace=True)
-    df.rename(columns={df.columns[0]: "Date"}, inplace=True)
-    
-    return df.iloc[:-1]  # Exclude the last row if it's a summary or empty row
+
+    # Preserve row labels for later line-item lookup.
+    if hasattr(df, "index"):
+        df.index = [str(idx) for idx in df.index]
+    if hasattr(df, "columns"):
+        df.columns = [str(col) for col in df.columns]
+
+    return df
 
 
 # implementing fallback for Financial extraction
@@ -75,26 +67,56 @@ def _first_numeric(*values):
 
 
 def _parse_news(ticker, top_n: int = 5) -> List[Dict[str, Any]]:
-    """Extract and parse news from ticker."""
+    """Extract and parse news from ticker payloads, including nested yfinance content blocks."""
     news = []
     try:
         raw_news = ticker.news or []
         for n in raw_news[:top_n]:
             if not isinstance(n, dict):
                 continue
-            title = n.get("title") or n.get("headline") or ""
+
+            content = n.get("content") if isinstance(n.get("content"), dict) else {}
+            title = (
+                n.get("title")
+                or n.get("headline")
+                or content.get("title")
+                or content.get("headline")
+                or content.get("summary")
+                or ""
+            )
             if not title:
                 continue
+
+            provider = content.get("provider") or {}
+            publisher = (
+                n.get("publisher")
+                or n.get("source")
+                or provider.get("displayName")
+                or provider.get("name")
+                or ""
+            )
+
+            link = (
+                n.get("link")
+                or content.get("canonicalUrl", {}).get("url")
+                or content.get("clickThroughUrl", {}).get("url")
+                or ""
+            )
+
             try:
-                ts = n.get("providerPublishTime")
+                ts = n.get("providerPublishTime") or content.get("pubDate")
                 if ts:
-                    ts = datetime.datetime.fromtimestamp(int(ts)).isoformat()
+                    if isinstance(ts, (int, float)):
+                        ts = datetime.datetime.fromtimestamp(int(ts)).isoformat()
+                    elif isinstance(ts, str):
+                        ts = ts
             except (ValueError, OSError):
                 ts = None
+
             news.append({
                 "title": title,
-                "link": n.get("link", ""),
-                "publisher": n.get("publisher") or n.get("source", ""),
+                "link": link,
+                "publisher": publisher,
                 "time": ts
             })
     except Exception as e:
@@ -137,62 +159,76 @@ def _extract_price_metrics(data: Dict[str, Any]) -> Dict[str, Optional[float]]:
     return metrics
 
 
-def _extract_revenue_metrics(fin) -> Dict[str, Optional[float]]:
-    """Extract revenue-related metrics."""
+def _extract_revenue_metrics(fin, info: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[float]]:
+    """Extract revenue-related metrics from financial statements with info fallback."""
     metrics: dict[str, Optional[float]] = {"revenue": None, "net_income": None, "revenue_growth_pct": None}
-    if fin is None or not hasattr(fin, "empty") or fin.empty:
-        return metrics
-    
-    try:
-        rev_candidates = ["Total Revenue", "Revenue", "Revenues"]
-        net_candidates = ["Net Income", "Net Income Applicable To Common Shares", "NetIncomeLoss"]
-        
-        rev = _get_dataframe_row(fin, rev_candidates)
-        net = _get_dataframe_row(fin, net_candidates)
-        
-        metrics["revenue"] = float(rev) if rev is not None else None
-        metrics["net_income"] = float(net) if net is not None else None
-        
-        # Revenue growth YoY
-        if fin.shape[1] >= 2:
-            for name in rev_candidates:
-                if name in fin.index:
-                    row = fin.loc[name]
-                    if len(row) >= 2:
-                        rev_new = float(row.iloc[0]) if row.iloc[0] is not None else None
-                        rev_old = float(row.iloc[1]) if row.iloc[1] is not None else None
-                        if rev_new is not None and rev_old not in (None, 0):
-                            metrics["revenue_growth_pct"] = ((rev_new - rev_old) / abs(rev_old)) * 100.0
-                    break
-    except Exception as e:
-        logger.debug(f"Revenue extraction failed: {e}")
-    
+    info = info or {}
+
+    if fin is not None and hasattr(fin, "empty") and not fin.empty:
+        try:
+            rev_candidates = ["Total Revenue", "Revenue", "Revenues"]
+            net_candidates = ["Net Income", "Net Income Applicable To Common Shares", "NetIncomeLoss"]
+
+            rev = _get_dataframe_row(fin, rev_candidates)
+            net = _get_dataframe_row(fin, net_candidates)
+
+            metrics["revenue"] = float(rev) if rev is not None else None
+            metrics["net_income"] = float(net) if net is not None else None
+
+            # Revenue growth YoY
+            if fin.shape[1] >= 2:
+                for name in rev_candidates:
+                    if name in fin.index:
+                        row = fin.loc[name]
+                        if len(row) >= 2:
+                            rev_new = float(row.iloc[0]) if row.iloc[0] is not None else None
+                            rev_old = float(row.iloc[1]) if row.iloc[1] is not None else None
+                            if rev_new is not None and rev_old not in (None, 0):
+                                metrics["revenue_growth_pct"] = ((rev_new - rev_old) / abs(rev_old)) * 100.0
+                        break
+        except Exception as e:
+            logger.debug(f"Revenue extraction failed: {e}")
+
+    if metrics["revenue"] is None:
+        metrics["revenue"] = _first_numeric(info.get("totalRevenue"), info.get("revenue"))
+    if metrics["net_income"] is None:
+        metrics["net_income"] = _first_numeric(info.get("netIncomeToCommon"), info.get("netIncome"))
+    if metrics["revenue_growth_pct"] is None:
+        metrics["revenue_growth_pct"] = _first_numeric(info.get("revenueGrowth"))
+
     return metrics
 
 
-def _extract_debt_metrics(bal) -> Dict[str, Optional[float]]:
-    """Extract debt and equity metrics."""
+def _extract_debt_metrics(bal, info: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[float]]:
+    """Extract debt and equity metrics from balance sheets with info fallback."""
     metrics: dict[str, Optional[float]] = {"total_debt": None, "total_equity": None, "debt_to_equity": None}
-    if bal is None or not hasattr(bal, "empty") or bal.empty:
-        return metrics
-    
-    try:
-        debt_candidates = ["Long Term Debt", "Total Debt", "Long-term Debt"]
-        equity_candidates = ["Total Stockholder Equity", "Total Stockholders' Equity", "Total Equity", "Stockholders Equity"]
-        
-        total_debt = _get_dataframe_row(bal, debt_candidates)
-        total_equity = _get_dataframe_row(bal, equity_candidates)
-        
-        if total_debt is not None:
-            metrics["total_debt"] = float(total_debt)
-        if total_equity is not None:
-            metrics["total_equity"] = float(total_equity)
-        
-        if (metrics["total_debt"] is not None and metrics["total_equity"] is not None and metrics["total_equity"] > 0):
-            metrics["debt_to_equity"] = metrics["total_debt"] / metrics["total_equity"]
-    except Exception as e:
-        logger.debug(f"Debt extraction failed: {e}")
-    
+    info = info or {}
+
+    if bal is not None and hasattr(bal, "empty") and not bal.empty:
+        try:
+            debt_candidates = ["Long Term Debt", "Total Debt", "Long-term Debt"]
+            equity_candidates = ["Total Stockholder Equity", "Total Stockholders' Equity", "Total Equity", "Stockholders Equity"]
+
+            total_debt = _get_dataframe_row(bal, debt_candidates)
+            total_equity = _get_dataframe_row(bal, equity_candidates)
+
+            if total_debt is not None:
+                metrics["total_debt"] = float(total_debt)
+            if total_equity is not None:
+                metrics["total_equity"] = float(total_equity)
+
+            if (metrics["total_debt"] is not None and metrics["total_equity"] is not None and metrics["total_equity"] > 0):
+                metrics["debt_to_equity"] = metrics["total_debt"] / metrics["total_equity"]
+        except Exception as e:
+            logger.debug(f"Debt extraction failed: {e}")
+
+    if metrics["debt_to_equity"] is None:
+        metrics["debt_to_equity"] = _first_numeric(info.get("debtToEquity"))
+    if metrics["total_debt"] is None:
+        metrics["total_debt"] = _first_numeric(info.get("totalDebt"), info.get("longTermDebt"))
+    if metrics["total_equity"] is None:
+        metrics["total_equity"] = _first_numeric(info.get("totalStockholderEquity"), info.get("bookValue"))
+
     return metrics
 
 
@@ -325,9 +361,9 @@ def extract_financial_metrics(data: dict) -> Dict[str, Optional[float]]:
     
     # Extract each metric group
     metrics.update(_extract_price_metrics(data))
-    metrics.update(_extract_revenue_metrics(data.get("financials")))
-    metrics.update(_extract_debt_metrics(data.get("balance_sheet")))
-    
+    metrics.update(_extract_revenue_metrics(data.get("financials"), data.get("info", {})))
+    metrics.update(_extract_debt_metrics(data.get("balance_sheet"), data.get("info", {})))
+
     return metrics
 
 

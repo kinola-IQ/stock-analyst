@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from system.agents.finance_agent.agent import root_agent
 from system.agents.finance_agent import tools as finance_tools
 from system.agents.finance_agent.tools import analyse_ticker
+from system.agents.finance_agent.tools_config import ticker_tools
 
 
 class TestResearchAgent:
@@ -54,7 +55,66 @@ class TestResearchResultStorage:
         assert finance_tools.research_result['plot'] == 'plot'
 
 
+class TestSkillLoading:
+    def test_read_skills_loads_existing_skill_file(self):
+        skill_text = finance_tools.read_skills('standard guide')
+
+        assert isinstance(skill_text, str)
+        assert skill_text.strip()
+
+
+class TestNewsAndResearchPersistence:
+    def test_parse_news_extracts_titles_from_nested_content_payload(self):
+        class FakeTicker:
+            news = [
+                {
+                    "content": {
+                        "title": "Apple launches new product",
+                        "summary": "A launch summary",
+                    }
+                }
+            ]
+
+        news = ticker_tools._parse_news(FakeTicker(), top_n=5)
+
+        assert len(news) == 1
+        assert news[0]["title"] == "Apple launches new product"
+        assert news[0]["publisher"] == ""
+
+    def test_save_findings_persists_research_text(self):
+        finance_tools.clear_research_results()
+
+        status = finance_tools.save_findings("research summary")
+
+        assert status == "saved"
+        assert finance_tools.research_result["findings"] == "research summary"
+
+
 class TestAnalyseTicker:
+    def test_extract_financial_metrics_uses_info_fallback_when_financials_missing(self):
+        data = {
+            "info": {
+                "currentPrice": 100.0,
+                "trailingPE": 20.0,
+                "forwardPE": 18.0,
+                "marketCap": 1000000000,
+                "totalRevenue": 500000000,
+                "revenueGrowth": 12.5,
+                "netIncomeToCommon": 80000000,
+                "debtToEquity": 0.75,
+            },
+            "financials": None,
+            "balance_sheet": None,
+        }
+
+        metrics = finance_tools.extract_financial_metrics(data)
+
+        assert metrics['current_price'] == 100.0
+        assert metrics['revenue'] == 500000000.0
+        assert metrics['revenue_growth_pct'] == 12.5
+        assert metrics['net_income'] == 80000000.0
+        assert metrics['debt_to_equity'] == 0.75
+
     @patch('system.agents.finance_agent.tools.fetch_company_data')
     @patch('system.agents.finance_agent.tools.extract_financial_metrics')
     @patch('system.agents.finance_agent.tools.score_news_sentiment')

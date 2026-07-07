@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Dict, Any
 
 from google.adk.agents import Agent
-from google.adk.tools import google_search, FunctionTool
-
+from google.adk.tools import FunctionTool
+from google.adk.tools.google_search_tool import google_search
 # custom modules
 # from ...utility.utils import retry_config
 from ...utility import model
@@ -111,6 +111,10 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
     except Exception as exc:
         logger.warning("Failed to generate plot: %s", exc)
 
+    critical_metrics = ["revenue", "revenue_growth_pct", "net_income", "debt_to_equity"]
+    missing_metrics = [name for name in critical_metrics if metrics.get(name) is None]
+    needs_follow_up = bool(missing_metrics)
+
     result = {
         "symbol": symbol.upper(),
         "company": data.get("company"),
@@ -119,7 +123,10 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
         "sentiment_score": sentiment,
         "verdict": decision["verdict"],
         "verdict_details": decision,
-        "plot_path": str(plot_path)
+        "plot_path": str(plot_path),
+        "missing_metrics": missing_metrics,
+        "needs_follow_up": needs_follow_up,
+        "data_quality_status": "complete" if not missing_metrics else "incomplete"
     }
     return result
 
@@ -128,27 +135,41 @@ def analyse_ticker(symbol: str) -> Dict[str, Any]:
 research_result: Dict[str, Any] = {}
 
 def save_findings(findings: str) -> str:
-    """Save the research findings to persistent storage.
-    
-    This tool is useful for storing findings from the research sub agent. it's analysis, and conclusions
-    in a structured format that can be retrieved later.
-    
-    Args:
-        findings (str): The research text to save. Should be a comprehensive
-                      that that includes the key findings, citations, analysis results, investment
-                      verdict, and any relevant caveats or recommendations.
-    
-    Returns:
-        str: A status message indicating success or failure.
-             - returns 'saved' if the findingd was appended to storage successfully.
-             - returns 'failed: <error>' if an exception occurs.
-    
-    """
+    """Save research findings to persistent storage for later retrieval."""
     try:
-        research_result['findings'] = findings
+        if findings is None:
+            findings = ""
+        text = findings.strip() if isinstance(findings, str) else str(findings)
+        research_result['findings'] = text
+        research_result['has_findings'] = bool(text)
         return "saved"
     except Exception as err:
         return f"failed: {err}"
+
+
+def research_agent() -> Agent:
+    """Create a research agent for web-based company investigation."""
+    try:
+        AGENT_MODEL = 'gemini-2.5-pro' # model.get_model()
+    except Exception as exc:
+        raise RuntimeError(
+            "LLM model not loaded; ensure API KEY is set and load_model() succeeded"
+        ) from exc
+
+    return Agent(
+        name="ResearchAgent",
+        model=AGENT_MODEL,
+        instruction=(
+            "You are a specialized research agent.\n\n"
+            "Use the google_search tool to find recent, relevant facts about the company.\n\n"
+            "When the finance analysis is incomplete or values like revenue, growth, debt, or valuation are missing, search official sources such as investor relations pages, filings, or earnings summaries before relying on generic web results.\n"
+            "Use the `save_findings` tool to store the full research results in memory before returning.\n"
+            "Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary."
+        ).strip(),
+        tools=[google_search, FunctionTool(save_findings)],
+        output_key="research_findings",
+        description="Agent focused on company research: gathers recent facts via search, stores findings, and returns concise, citation-backed summaries."
+    )
 
 def save_plot(plot: str) -> str:
     """Save the plot path to persistent storage.
