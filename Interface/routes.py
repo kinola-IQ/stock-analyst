@@ -27,7 +27,7 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
-@router.post("/analyze-stock/", response_model=AgentOutputSchema)
+@router.post("/analyze-stock", response_model=AgentOutputSchema)
 async def analyze_stock(
     ticker: UserInputSchema,
     request: Request,
