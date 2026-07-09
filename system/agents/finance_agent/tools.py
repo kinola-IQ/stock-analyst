@@ -161,7 +161,9 @@ def research_agent() -> Agent:
         model=AGENT_MODEL,
         instruction=(
             "You are a specialized research agent.\n\n"
-            "Use the google_search tool to find recent, relevant facts about the company.\n\n"
+            "following the instructions `instructions` provided by the `ResearchCoordinator`, \n\n"
+            "accessible via it's associated context variable, \n\n"
+            "use the google_search tool to find recent, relevant facts about the company.\n\n"
             "When the finance analysis is incomplete or values like revenue, growth, debt, or valuation are missing, search official sources such as investor relations pages, filings, or earnings summaries before relying on generic web results.\n"
             "Use the `save_findings` tool to store the full research results in memory before returning.\n"
             "Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary."

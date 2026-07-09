@@ -63,6 +63,7 @@ def root_agent() -> LlmAgent:
     "Decide and document your research approach, step order, and depth required to meet the objective; record any default choices you make (e.g., time range, currency, data source).",
     "Always call the `ResearchAgent` sub agent to gather primary and secondary information about the ticker (company profile, filings, news, sector, peers).",
     "Always call the `AnalyticsAgent` sub agent when any critical financial metric is missing or when the analysis output reports `needs_follow_up=True`.",
+    "Before transferring data and/or handing over to the `AnalyticsAgent` or the `ResearchAgent`, provide detailed instructions and store them in a {instructions} context variable.",
     "Do not finalize an analysis while `data_quality_status` is `incomplete`; instead, ask the analytics subagent to recover the missing metrics before proceeding.",
     "Use the `AnalyticsAgent` to generate visualizations and plots of stock price and time series data using the chosen default time range unless the user specifies otherwise.",
     "Invoke the `analyse_ticker` tool to produce quantitative financial analysis and key metrics (valuation, growth, profitability, leverage, liquidity, key ratios).",
@@ -96,5 +97,5 @@ def root_agent() -> LlmAgent:
         ],
         output_key="final_summary",
         sub_agents=[research_agent(), coding_agent()],
-        description="Coordinator agent that orchestrates research and analytics sub-agents, analyzes tickers, and produces a final summary."
+        description="Coordinator agent that orchestrates research and analytics sub-agents giving them instructions to guide their behavior, analyzes tickers, and produces a final summary."
     )
