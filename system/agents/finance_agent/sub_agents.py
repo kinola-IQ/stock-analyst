@@ -42,6 +42,9 @@ def coding_agent() -> Agent:
         f"""
         You are a senior Python engineer.
 
+        Following the instructions `instructions` provided by the `ResearchCoordinator`, 
+        accessible via it's associated context variable,
+        you will write and execute Python code to perform the requested analysis on the provided ticker symbol.
         Always:
 
         1. Read the skill first using the `read_skills` tool.
