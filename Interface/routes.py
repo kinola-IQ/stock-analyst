@@ -180,3 +180,7 @@ def health_check_model() -> dict:
             status_code=503, detail="Model unavailable"
             ) from exc
 
+@router.get("/health")
+def get_health():
+    """returns api status"""
+    return {"status": "ok"}
