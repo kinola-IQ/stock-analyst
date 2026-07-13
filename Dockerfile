@@ -48,7 +48,5 @@ ENV PYTHONUNBUFFERED=1
 ENV APP_NAME=stock-analyst
 ENV USER_ID=default-user
 ENV SESSION_ID=default-session
-ENV HOST=0.0.0.0
-ENV PORT=8501
 
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8501", "--loop", "uvloop", "--workers", "1"]
