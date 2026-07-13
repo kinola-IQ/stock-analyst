@@ -34,8 +34,8 @@ if not API_KEY:
 APP_NAME = get_env("APP_NAME", "stock-analyst")
 USER_ID = get_env("USER_ID", "default_user")
 SESSION_ID = get_env("SESSION_ID", "default_session")
-HOST = get_env("HOST", "127.0.0.1")
-PORT = get_env("PORT", 8501)
+HOST = get_env("HOST", "0.0.0.0")
+PORT = int(get_env("PORT", 8501))
 
 
 @asynccontextmanager
@@ -102,4 +102,4 @@ def check_health() -> str:
     return 'ok'
 
 if __name__ == '__main__':
-    uvicorn.run('main:app', host=HOST, port=PORT)
+    uvicorn.run('main:app', host=HOST, port=PORT,  loop="uvloop", workers=1)

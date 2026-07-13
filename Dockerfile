@@ -51,4 +51,4 @@ ENV SESSION_ID=default-session
 ENV HOST=0.0.0.0
 ENV PORT=8501
 
-CMD ["uvicorn", "main:app", "--host", "${HOST}", "--port", "${PORT}", "--loop", "uvloop", "--workers", "1"]
+CMD ["python", "main.py"]
