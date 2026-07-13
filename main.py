@@ -97,7 +97,7 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-@app.get("/")
+@app.get("/health")
 def check_health() -> str:
     return 'ok'
 

@@ -9,6 +9,7 @@ google-adk
 # google-adk[extensions]
 langchain-experimental
 litellm
+uvloop
 # Development dependencies
 pytest
 pytest-mock
