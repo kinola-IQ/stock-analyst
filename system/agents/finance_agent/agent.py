@@ -90,12 +90,13 @@ def root_agent() -> LlmAgent:
         name="ResearchCoordinator",
         model=AGENT_MODEL,
         instruction=instruction,
-        # wrapping subagent to make it a callable tool for the root agent
+       
         tools=[
             FunctionTool(analyse_ticker),
             FunctionTool(save_plot)
         ],
         output_key="final_summary",
+         # wrapping subagent to make it a callable tool for the root agent
         sub_agents=[research_agent(), coding_agent()],
         description="Coordinator agent that orchestrates research and analytics sub-agents giving them instructions to guide their behavior, analyzes tickers, and produces a final summary."
     )
