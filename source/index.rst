@@ -6,12 +6,17 @@
 Stock Analyst: FastAPI stock research service documentation
 ===========================================================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+
+A FastAPI-based stock research service designed to analyze ticker symbols
+and produce structured research summaries.
+
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 3
+   :caption: API Reference:
+
+   Interface/modules
+   system/modules
+
 

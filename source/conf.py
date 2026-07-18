@@ -19,6 +19,11 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.viewcode'
 templates_path = ['_templates']
 exclude_patterns = []
 
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
 
 
 # -- Options for HTML output -------------------------------------------------
