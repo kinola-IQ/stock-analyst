@@ -3,8 +3,7 @@ name: Build and Deploy Sphinx Docs
 on:
   push:
     branches:
-      - master
-      - previews
+      - main
   workflow_dispatch:  # allow manual trigger
 
 permissions:
