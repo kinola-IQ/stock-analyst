@@ -6,9 +6,14 @@ docs/
 .*cache/
 notebook/
 tests/
+source/
+build/
 
 
 # individual files
 .gitignore
 .*log*
 .env
+.*
+*ake
+.json
