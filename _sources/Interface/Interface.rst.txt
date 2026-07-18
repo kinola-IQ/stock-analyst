@@ -1,0 +1,21 @@
+Interface package
+=================
+
+Submodules
+----------
+
+Interface.routes module
+-----------------------
+
+.. automodule:: Interface.routes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: Interface
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,53 @@
+system.utility package
+======================
+
+Submodules
+----------
+
+system.utility.custom\_exceptions module
+----------------------------------------
+
+.. automodule:: system.utility.custom_exceptions
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.utility.logger module
+----------------------------
+
+.. automodule:: system.utility.logger
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.utility.model module
+---------------------------
+
+.. automodule:: system.utility.model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.utility.schema module
+----------------------------
+
+.. automodule:: system.utility.schema
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.utility.utils module
+---------------------------
+
+.. automodule:: system.utility.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: system.utility
+   :members:
+   :show-inheritance:
+   :undoc-members:

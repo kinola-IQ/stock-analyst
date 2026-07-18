@@ -1,0 +1,19 @@
+system package
+==============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   system.agents
+   system.utility
+
+Module contents
+---------------
+
+.. automodule:: system
+   :members:
+   :show-inheritance:
+   :undoc-members:

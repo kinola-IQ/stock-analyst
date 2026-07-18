@@ -1,0 +1,37 @@
+system.agents.finance\_agent package
+====================================
+
+Submodules
+----------
+
+system.agents.finance\_agent.agent module
+-----------------------------------------
+
+.. automodule:: system.agents.finance_agent.agent
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.agents.finance\_agent.sub\_agents module
+-----------------------------------------------
+
+.. automodule:: system.agents.finance_agent.sub_agents
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.agents.finance\_agent.tools module
+-----------------------------------------
+
+.. automodule:: system.agents.finance_agent.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: system.agents.finance_agent
+   :members:
+   :show-inheritance:
+   :undoc-members:
