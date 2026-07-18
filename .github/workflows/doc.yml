@@ -29,7 +29,7 @@ jobs:
 
       - name: Generate API docs
         run: |
-          sphinx-apidoc -o source/interface interface
+          sphinx-apidoc -o source/Interface Interface
           sphinx-apidoc -o source/system system
 
       - name: Build documentation
