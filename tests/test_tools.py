@@ -2,8 +2,8 @@
 import pytest
 from unittest.mock import Mock, patch
 from system.agents.finance_agent.agent import root_agent
-from system.agents.finance_agent import tools as finance_tools
-from system.agents.finance_agent.tools import analyse_ticker
+from system.agents.finance_agent import data_tools as finance_tools
+from system.agents.finance_agent.data_tools import analyse_ticker
 
 
 class TestResearchAgent:

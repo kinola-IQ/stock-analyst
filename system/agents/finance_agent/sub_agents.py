@@ -1,31 +1,24 @@
 """module to configure sub agents"""
 
 from google.adk.agents import Agent
-from google.adk.tools import google_search, FunctionTool
+from google.adk.tools import FunctionTool
 from langchain_experimental.tools import PythonREPLTool
+from langchain_community.tools import DuckDuckGoSearchRun
 
 from ...utility import model
-from ..finance_agent.tools import (
-    save_findings,
-    save_plot,
-    read_skills,
-    get_guardrails
-)
+from .prompts import foreign_stocks_prompt, local_stocks_prompt
+from .data_tools import read_skills
+from ..finance_agent.market_data_tools import analyse_ticker, financial_data_tool, macro_context_tool
+
 
 # Research agent for websearching
-def research_agent() -> Agent:
-    """Create a research agent for web-based company investigation.
+def foreign_stocks_agent() -> Agent:
+    """Create a sub-agent for foreign company investigation.
 
-    The agent uses Google Search to gather 2–3 concise, relevant facts about
-    the specified company, event, milestone, or market development, and returns
-    them with citations.
-
-    Args:
-        company (str): The research topic. Use a short, specific phrase such as
-            a company name, ticker symbol, product name, or recent business event.
+    The agent extracts financial information about non-african foreign stocks.
 
     Returns:
-        Agent: A configured research agent with Google Search access. The agent
+        Agent: A configured sub agent with yfinance access. The agent
         is intended to be invoked by the root coordinator agent.
 
     Raises:
@@ -40,34 +33,25 @@ def research_agent() -> Agent:
         ) from exc
 
     return Agent(
-        name="ResearchAgent",
+        name="ForeignStocksAgent",
         model=AGENT_MODEL,
-        instruction=
-        """
-        You are a specialized research agent.
+        instruction=foreign_stocks_prompt(),
 
-        Use the google_search tool to find all recent relevant facts about:
-        {company}
-
-        use the `save_findings` tool to store the full research results in memory.
-        Return concise findings with citations only. Do not add filler, speculation, or unrelated commentary.
-        
-        """.strip(),
-        tools=[google_search, FunctionTool(save_findings)],
+        tools=[FunctionTool(analyse_ticker), FunctionTool(DuckDuckGoSearchRun)]
         # The result of this agent will be stored in the session state
         #  with this key.
-        output_key="research_findings",
-        description="Agent focused on company research: gathers recent facts via search, stores findings, and returns concise, citation-backed summaries."
-    )
+        output_key="foreign_results",
+         description="Agent focused on researching foreign stocks on yfinance"
+)
 
 # subagent for conducting analysis
-def coding_agent() -> Agent:
-    """Create a coding agent for added ticker based analysis.
+def local_stocks_agent() -> Agent:
+    """Create a local stocks agent for analyzing Nigerian and African stocks.
 
     The agent uses pythonRepl to run python codes performing analysis requested for by the root agent.
 
     Returns:
-        Agent: A configured coding sub agent with programming capability. The agent
+        Agent: A configured local stocks sub agent with programming capability. The agent
         is intended to be invoked by the root coordinator agent.
 
     Raises:
@@ -82,28 +66,16 @@ def coding_agent() -> Agent:
         ) from exc
 
     return Agent(
-        name="AnalyticsAgent",
+        name="LocalStocksAgent",
         model=AGENT_MODEL,
-        instruction=
-        f"""
-        You are a senior Python engineer.
-
-        Always:
-
-        1. Read the skill first using the `read_skills` tool.
-        2. Follow every rule inside it.
-        3. Produce executable Python code.
-        4. Execute the code using Python REPL when needed.
-        5. Explain the result.
-        6. Save the `plot` using the `save_plot` tool when needed.
-        
-        You MUST obey following guardrails below:
-        {get_guardrails()}
-        Generate and execute Python code.
-        """.strip(),
-        tools=[PythonREPLTool, FunctionTool(read_skills), FunctionTool(save_plot)],
+        instruction=local_stocks_prompt(),
+        tools=[
+            FunctionTool(PythonREPLTool),
+            FunctionTool(financial_data_tool),
+            FunctionTool(macro_context_tool),
+            FunctionTool(read_skills)]
         # The result of this agent will be stored in the session state
         #  with this key.
-        output_key="analytics_results",
-        description="Agent specialized in analytics workflows: reads skills, executes Python code, and saves plots."
+        output_key="local_results",
+        description="Agent focused on local nigerian and african stocks."
 )

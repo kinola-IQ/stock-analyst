@@ -3,8 +3,10 @@ docker-entrypoint.sh
 Originial Design Plan.png
 *.log*
 *.log
-/.venv
+*venv
 /.pytest_cache
 /.benchmarks
 .vercel
 .env*
+*pycache*
+*.pyc

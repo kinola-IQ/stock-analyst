@@ -6,12 +6,12 @@ nest_asyncio
 vaderSentiment
 protobuf==5.29.6 
 google-adk
-# google-adk[extensions]
 langchain-experimental
 litellm
-uvloop
+matplotlib
+# uvloop
 # Development dependencies
-pytest
-pytest-mock
-pytest-asyncio
-pytest-benchmark
+# pytest
+# pytest-mock
+# pytest-asyncio
+# pytest-benchmark

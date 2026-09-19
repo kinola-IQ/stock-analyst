@@ -353,85 +353,8 @@ def score_news_sentiment(headlines: List[str]) -> float:
     return float(total_score / count) if count > 0 else 0.0
 
 
-def generate_analysis_script(symbol_or_metrics: Any, metrics_or_headlines: Optional[Any] = None,
-                             sentiment_score_or_symbol: Optional[Any] = None,
-                             symbol: Optional[str] = None, filename: Optional[str] = None) -> str:
-    """Generate a Python analysis script with company data and findings.
-    
-    Creates a complete, executable Python script that documents the analysis
-    performed on a stock. The script includes company data, extracted metrics,
-    news headlines, sentiment scores, and can be extended with further analysis.
-    
-    Args:
-        symbol (str): The stock ticker symbol (will be uppercase).
-        metrics (Dict[str, Any]): Dictionary of extracted financial metrics.
-        headlines (List[str]): List of news headlines to include in the script.
-        sentiment_score (float): The calculated sentiment score (-1.0 to 1.0).
-        filename (Optional[str]): Name for the generated script file.
-                                 Defaults to "{SYMBOL}_analysis.py".
-    
-    Returns:
-        str: A complete Python script as a multi-line string that:
-             - Imports necessary libraries
-             - Defines the ticker symbol
-             - Fetches company info
-             - Prints current stock price
-             - Outputs metrics snapshot
-             - Lists recent headlines
-             - Displays sentiment score
-             - Provides template for further analysis
-    
-    Note:
-        The returned script is ready to execute and can be extended with
-        additional analysis, visualizations, backtests, or data exports.
-    
-    Example:
-        script = generate_analysis_script("AAPL", metrics, headlines, 0.45)
-        # Returns a complete Python script as a string
-    """
-    if isinstance(symbol_or_metrics, dict):
-        metrics = symbol_or_metrics
-        headlines = metrics_or_headlines or []
-        sentiment_score = sentiment_score_or_symbol or 0.0
-        symbol_value = symbol or "UNKNOWN"
-    else:
-        symbol_value = str(symbol_or_metrics).upper()
-        metrics = metrics_or_headlines or {}
-        headlines = sentiment_score_or_symbol or []
-        sentiment_score = symbol or 0.0
 
-    if filename is None:
-        filename = f"{symbol_value.upper()}_analysis.py"
-
-    script_lines = [
-        "import yfinance as yf",
-        "import pandas as pd",
-        "from datetime import datetime",
-        "",
-        f"symbol = {repr(symbol_value.upper())}",
-        "t = yf.Ticker(symbol)",
-        "info = t.info",
-        "print('Company:', info.get('longName') or info.get('shortName') or symbol)",
-        "hist = t.history(period='1y')",
-        "print('Latest close:', hist['Close'].iloc[-1] if not hist.empty else info.get('currentPrice'))",
-        "print('Generated metrics snapshot:')",
-        f"metrics_snapshot = {json.dumps(metrics, default=str)}",
-        "print(metrics_snapshot)",
-        "",
-        "print('Recent headlines:')",
-        f"headlines = {json.dumps(headlines)}",
-        "for h in headlines:",
-        "    print('-', h)",
-        "",
-        f"print('Sentiment score:', {sentiment_score})",
-        "",
-        "# Add further analysis: ratio calculations, visualizations, backtests, or export results.",
-        "print('Script generated on', datetime.utcnow().isoformat())",
-    ]
-    return "\n".join(script_lines)
-
-
-def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: str,
+def decide_action(metrics: Dict[str, Any], sentiment_score: float,
                   thresholds: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
     """Apply decision rules to financial metrics and generate a BUY/SELL/HOLD verdict.
     
@@ -450,7 +373,6 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
                                  - forward_pe (float): Forward P/E ratio
         sentiment_score (float): Overall sentiment score (-1.0 to 1.0) from
                                news headline analysis.
-        script_text (str): Generated analysis script (stored in results for reference).
         thresholds (Optional[Dict[str, float]]): Custom decision thresholds. Defaults:
                                                 - revenue_growth_good_pct: 5.0
                                                 - revenue_growth_bad_pct: -5.0
@@ -469,7 +391,6 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
             - pos_signals (int): Count of positive indicators
             - neg_signals (int): Count of negative indicators
             - reasons (List[str]): Detailed list of factors influencing the decision
-            - script (str): The input script for reference
     
     Scoring Rules:
         Positive factors (+1 each):
@@ -487,7 +408,7 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
             - P/E ratio > pe_high (overvalued)
     
     Example:
-        decision = decide_action(metrics, 0.3, script_text)
+        decision = decide_action(metrics, 0.3)
         print(f"Verdict: {decision['verdict']}")  # Output: "BUY"
         print(f"Reasons: {decision['reasons']}")  # List of factors
     """
@@ -597,5 +518,4 @@ def decide_action(metrics: Dict[str, Any], sentiment_score: float, script_text: 
         "pos_signals": pos,
         "neg_signals": neg,
         "reasons": reasons,
-        "script": script_text
     }

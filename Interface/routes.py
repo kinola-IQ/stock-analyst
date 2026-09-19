@@ -9,7 +9,7 @@ from system.utility.schema import UserInputSchema, AgentOutputSchema
 from system.utility.logger import logger
 from system.utility.utils import get_env
 from system.utility import model
-from system.agents.finance_agent import tools
+from system.agents.finance_agent import data_tools
 router = APIRouter(prefix="/v1")
 app = FastAPI()
 app.include_router(router)
@@ -36,11 +36,7 @@ async def analyze_stock(
     """Analyze a stock based on ticker symbol."""
 
     # delete any previous assets to avoid stale data
-    tools.delete_assets()
-
-    # Clear previous research results to avoid stale data
-    tools.clear_research_results()
-
+    data_tools.clear_plots()
     try:
         ticker_symbol = ticker.ticker.strip().upper()
 
@@ -121,15 +117,10 @@ async def analyze_stock(
         logger.info("Analysis completed: %s (%s) chars",
                         ticker_symbol, len(final_response_text))
 
-        research_payload = tools.research_result or {}
         findings = None
         plot = None
-        if isinstance(research_payload, dict):
-            findings = research_payload.get('findings')
-            plot = research_payload.get('plot')
-        elif isinstance(research_payload, list) and len(research_payload) > 0:
-            findings = research_payload[0].get('findings') if len(research_payload) > 0 else None
-            plot = research_payload[1].get('plot') if len(research_payload) > 1 else None
+        if isinstance(data_tools.plot_store, dict):
+            plot = next(iter(data_tools.plot_store))
 
         return AgentOutputSchema(
             result=final_response_text,
