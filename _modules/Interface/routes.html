@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interface.routes &#8212; Stock Analyst: FastAPI stock research service 7-18-2026 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=27fed22d" />
+    <script src="../../_static/documentation_options.js?v=7506906c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for Interface.routes</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""FastAPI routes for stock analysis."""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Request</span><span class="p">,</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">Header</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">google.genai</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">system.utility.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserInputSchema</span><span class="p">,</span> <span class="n">AgentOutputSchema</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">system.utility.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">system.utility.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_env</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">system.utility</span><span class="w"> </span><span class="kn">import</span> <span class="n">model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">system.agents.finance_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">data_tools</span>
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">"/v1"</span><span class="p">)</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+<span class="n">app</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">router</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="verify_api_key">
+<a class="viewcode-back" href="../../Interface/Interface.html#Interface.routes.verify_api_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_api_key</span><span class="p">(</span><span class="n">x_api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Header</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">"X-API-Key"</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">"""Verify the API key from request headers."""</span>
+    <span class="n">expected_key</span> <span class="o">=</span> <span class="n">get_env</span><span class="p">(</span><span class="s2">"API_KEY"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">expected_key</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"API key not configured in environment"</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Service configuration error"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x_api_key</span> <span class="o">!=</span> <span class="n">expected_key</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Invalid API key attempt </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">x_api_key</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">401</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Invalid API key"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="analyze_stock">
+<a class="viewcode-back" href="../../Interface/Interface.html#Interface.routes.analyze_stock">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/analyze-stock/"</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">AgentOutputSchema</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_stock</span><span class="p">(</span>
+    <span class="n">ticker</span><span class="p">:</span> <span class="n">UserInputSchema</span><span class="p">,</span>
+    <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">verify_api_key</span><span class="p">)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Analyze a stock based on ticker symbol."""</span>
+
+    <span class="c1"># delete any previous assets to avoid stale data</span>
+    <span class="n">data_tools</span><span class="o">.</span><span class="n">clear_plots</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ticker_symbol</span> <span class="o">=</span> <span class="n">ticker</span><span class="o">.</span><span class="n">ticker</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+        <span class="n">runner</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"runner"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">runner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Runner not initialized in app state"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"Runner not initialized"</span><span class="p">)</span>
+
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_id"</span><span class="p">,</span> <span class="s2">"default_user"</span><span class="p">)</span>
+        <span class="n">session_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"session_id"</span><span class="p">,</span> <span class="s2">"default_session"</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Starting analysis: </span><span class="si">%s</span><span class="s2"> (user=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="n">ticker_symbol</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">"Analysis failed to start: </span><span class="si">%s</span><span class="s2"> : </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Stock analysis failed"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Package query for ADK</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">Content</span><span class="p">(</span>
+            <span class="n">role</span><span class="o">=</span><span class="s2">"user"</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="p">[</span><span class="n">types</span><span class="o">.</span><span class="n">Part</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">ticker_symbol</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="n">final_response_text</span> <span class="o">=</span> <span class="s2">"No response from agent"</span>
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">consume_stream</span><span class="p">():</span>
+            <span class="k">nonlocal</span> <span class="n">final_response_text</span>
+            <span class="c1"># Stream responses from runner</span>
+            <span class="k">async</span> <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_async</span><span class="p">(</span>
+                <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span> <span class="n">session_id</span><span class="o">=</span><span class="n">session_id</span><span class="p">,</span> <span class="n">new_message</span><span class="o">=</span><span class="n">content</span>
+            <span class="p">):</span>
+                <span class="c1"># Handle final response - check multiple possible properties</span>
+                <span class="n">is_final</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s1">'is_final_response'</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">is_final_response</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_final_response</span><span class="p">())</span> <span class="ow">or</span>
+
+                    <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s1">'is_final_response'</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">is_final_response</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">is_final_response</span><span class="p">)</span> <span class="ow">or</span>
+
+                    <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s1">'final_response'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">final_response</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">is_final</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s1">'parts'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+                            <span class="n">final_response_text</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+                        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s1">'text'</span><span class="p">):</span>
+                            <span class="n">final_response_text</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">text</span>
+                
+
+                <span class="c1"># Also capture regular content in case event</span>
+                <span class="c1"># doesn't have final_response marker</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s1">'parts'</span><span class="p">)</span> <span class="ow">and</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+                        <span class="n">text</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+                        <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                            <span class="n">final_response_text</span> <span class="o">=</span> <span class="n">text</span>
+                    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="s1">'text'</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                            <span class="n">final_response_text</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">text</span>
+
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">consume_stream</span><span class="p">(),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">final_response_text</span> <span class="o">==</span> <span class="s2">"No response from agent"</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No response from agent for </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">ticker_symbol</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"could not generate a response"</span>
+                <span class="p">)</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Analysis completed: </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">) chars"</span><span class="p">,</span>
+                        <span class="n">ticker_symbol</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_response_text</span><span class="p">))</span>
+
+        <span class="n">findings</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data_tools</span><span class="o">.</span><span class="n">plot_store</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">data_tools</span><span class="o">.</span><span class="n">plot_store</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">AgentOutputSchema</span><span class="p">(</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">final_response_text</span><span class="p">,</span>
+            <span class="n">findings</span><span class="o">=</span><span class="n">findings</span><span class="p">,</span>
+            <span class="n">plot</span><span class="o">=</span><span class="n">plot</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">"Analysis failed for </span><span class="si">%s</span><span class="s2"> : </span><span class="si">%s</span><span class="s2"> : </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">ticker_symbol</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Stock analysis failed"</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+
+<div class="viewcode-block" id="health_check_runner">
+<a class="viewcode-back" href="../../Interface/Interface.html#Interface.routes.health_check_runner">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health_runner"</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">health_check_runner</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Health check for runner service."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">runner</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"runner"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">runner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Service not ready"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"healthy"</span><span class="p">,</span> <span class="s2">"service"</span><span class="p">:</span> <span class="s2">"stock-analyst"</span><span class="p">,</span> <span class="s2">"runner"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Runner health check failed: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Service unavailable"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+
+<div class="viewcode-block" id="health_check_model">
+<a class="viewcode-back" href="../../Interface/Interface.html#Interface.routes.health_check_model">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health_model"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health_check_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Health check for model service."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">get_model</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Model not ready"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"healthy"</span><span class="p">,</span>
+            <span class="s2">"service"</span><span class="p">:</span> <span class="s2">"stock-analyst"</span><span class="p">,</span>
+            <span class="s2">"model"</span><span class="p">:</span> <span class="s2">"loaded"</span><span class="p">}</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Model health check failed: </span><span class="si">%s</span><span class="s2"> "</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+            <span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Model unavailable"</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
+
+
+<div class="viewcode-block" id="get_health">
+<a class="viewcode-back" href="../../Interface/Interface.html#Interface.routes.get_health">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_health</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""returns api status"""</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"ok"</span><span class="p">}</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Stock Analyst: FastAPI stock research service</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../Interface/modules.html">Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../system/modules.html">system</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2026, Omolayo-akinola Dumininuoluwa(kinola-iq).
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.0.4</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

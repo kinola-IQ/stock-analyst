@@ -58,14 +58,120 @@
 </dd></dl>
 
 </section>
-<section id="system-utility-model-module">
-<h2>system.utility.model module<a class="headerlink" href="#system-utility-model-module" title="Link to this heading">¶</a></h2>
+<section id="module-system.utility.model">
+<span id="system-utility-model-module"></span><h2>system.utility.model module<a class="headerlink" href="#module-system.utility.model" title="Link to this heading">¶</a></h2>
+<p>Gemini model initialization and caching with API setup.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.utility.model.get_model">
+<span class="sig-prename descclassname"><span class="pre">system.utility.model.</span></span><span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LiteLlm</span></span></span><a class="reference internal" href="../_modules/system/utility/model.html#get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.model.get_model" title="Link to this definition">¶</a></dt>
+<dd><p>Return the cached model name, or raise if not loaded.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.utility.model.load_model">
+<span class="sig-prename descclassname"><span class="pre">system.utility.model.</span></span><span class="sig-name descname"><span class="pre">load_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'groq/llama-3.3-70b-versatile'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/system/utility/model.html#load_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.model.load_model" title="Link to this definition">¶</a></dt>
+<dd><p>Load and cache the model name on startup.</p>
+</dd></dl>
+
 </section>
-<section id="system-utility-schema-module">
-<h2>system.utility.schema module<a class="headerlink" href="#system-utility-schema-module" title="Link to this heading">¶</a></h2>
+<section id="module-system.utility.schema">
+<span id="system-utility-schema-module"></span><h2>system.utility.schema module<a class="headerlink" href="#module-system.utility.schema" title="Link to this heading">¶</a></h2>
+<p>Schema definitions for API endpoints.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">system.utility.schema.</span></span><span class="sig-name descname"><span class="pre">AgentOutputSchema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">findings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'success'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/system/utility/schema.html#AgentOutputSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.schema.AgentOutputSchema" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Agent response schema.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.findings">
+<span class="sig-name descname"><span class="pre">findings</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.findings" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.result">
+<span class="sig-name descname"><span class="pre">result</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.result" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.status">
+<span class="sig-name descname"><span class="pre">status</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.status" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.AgentOutputSchema.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#system.utility.schema.AgentOutputSchema.timestamp" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="system.utility.schema.UserInputSchema">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">system.utility.schema.</span></span><span class="sig-name descname"><span class="pre">UserInputSchema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Annotated</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">MinLen</span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">min_length</span></span><span class="o"><span class="pre">=</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">MaxLen</span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">max_length</span></span><span class="o"><span class="pre">=</span></span><span class="m"><span class="pre">6</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/system/utility/schema.html#UserInputSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.schema.UserInputSchema" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>Ticker input validation schema.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.UserInputSchema.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#system.utility.schema.UserInputSchema.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="system.utility.schema.UserInputSchema.ticker">
+<span class="sig-name descname"><span class="pre">ticker</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><a class="headerlink" href="#system.utility.schema.UserInputSchema.ticker" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="system.utility.schema.UserInputSchema.validate_ticker">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate_ticker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/utility/schema.html#UserInputSchema.validate_ticker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.schema.UserInputSchema.validate_ticker" title="Link to this definition">¶</a></dt>
+<dd><p>Validate and normalize ticker to uppercase.</p>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="system-utility-utils-module">
-<h2>system.utility.utils module<a class="headerlink" href="#system-utility-utils-module" title="Link to this heading">¶</a></h2>
+<section id="module-system.utility.utils">
+<span id="system-utility-utils-module"></span><h2>system.utility.utils module<a class="headerlink" href="#module-system.utility.utils" title="Link to this heading">¶</a></h2>
+<p>Utility helpers for the project.</p>
+<p>Includes functions to build retry configuration and environment variable handling.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.utility.utils.get_env">
+<span class="sig-prename descclassname"><span class="pre">system.utility.utils.</span></span><span class="sig-name descname"><span class="pre">get_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/utility/utils.html#get_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.utils.get_env" title="Link to this definition">¶</a></dt>
+<dd><p>Get environment variable with sanitization (strip quotes and whitespace).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.utility.utils.retry_config">
+<span class="sig-prename descclassname"><span class="pre">system.utility.utils.</span></span><span class="sig-name descname"><span class="pre">retry_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/system/utility/utils.html#retry_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.utils.retry_config" title="Link to this definition">¶</a></dt>
+<dd><p>Return retry configuration for transient HTTP errors.</p>
+<p>Handles rate limits and temporary service unavailability.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.utility.utils.retry_on_exception">
+<span class="sig-prename descclassname"><span class="pre">system.utility.utils.</span></span><span class="sig-name descname"><span class="pre">retry_on_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_attempts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/system/utility/utils.html#retry_on_exception"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.utility.utils.retry_on_exception" title="Link to this definition">¶</a></dt>
+<dd><p>Decorator to retry a function on exception.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_attempts</strong> – Maximum number of attempts</p></li>
+<li><p><strong>delay</strong> – Initial delay between attempts</p></li>
+<li><p><strong>backoff</strong> – Multiplier for delay on each retry</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-system.utility">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.utility" title="Link to this heading">¶</a></h2>

@@ -44,8 +44,10 @@
 <li class="toctree-l3"><a class="reference internal" href="system.agents.finance_agent.html">system.agents.finance_agent package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#system-agents-finance-agent-agent-module">system.agents.finance_agent.agent module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#module-system.agents.finance_agent.data_tools">system.agents.finance_agent.data_tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#module-system.agents.finance_agent.market_data_tools">system.agents.finance_agent.market_data_tools module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#module-system.agents.finance_agent.prompts">system.agents.finance_agent.prompts module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#system-agents-finance-agent-sub-agents-module">system.agents.finance_agent.sub_agents module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#system-agents-finance-agent-tools-module">system.agents.finance_agent.tools module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="system.agents.finance_agent.html#module-system.agents.finance_agent">Module contents</a></li>
 </ul>
 </li>
@@ -64,9 +66,35 @@
 <li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.logger.register_http_logging"><code class="docutils literal notranslate"><span class="pre">register_http_logging()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="system.utility.html#system-utility-model-module">system.utility.model module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system.utility.html#system-utility-schema-module">system.utility.schema module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="system.utility.html#system-utility-utils-module">system.utility.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="system.utility.html#module-system.utility.model">system.utility.model module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.model.get_model"><code class="docutils literal notranslate"><span class="pre">get_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.model.load_model"><code class="docutils literal notranslate"><span class="pre">load_model()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="system.utility.html#module-system.utility.schema">system.utility.schema module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.findings"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.findings</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.model_config"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.plot"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.plot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.result"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.result</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.status"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.AgentOutputSchema.timestamp"><code class="docutils literal notranslate"><span class="pre">AgentOutputSchema.timestamp</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.schema.UserInputSchema"><code class="docutils literal notranslate"><span class="pre">UserInputSchema</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.UserInputSchema.model_config"><code class="docutils literal notranslate"><span class="pre">UserInputSchema.model_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.UserInputSchema.ticker"><code class="docutils literal notranslate"><span class="pre">UserInputSchema.ticker</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="system.utility.html#system.utility.schema.UserInputSchema.validate_ticker"><code class="docutils literal notranslate"><span class="pre">UserInputSchema.validate_ticker()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="system.utility.html#module-system.utility.utils">system.utility.utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.utils.get_env"><code class="docutils literal notranslate"><span class="pre">get_env()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.utils.retry_config"><code class="docutils literal notranslate"><span class="pre">retry_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="system.utility.html#system.utility.utils.retry_on_exception"><code class="docutils literal notranslate"><span class="pre">retry_on_exception()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="system.utility.html#module-system.utility">Module contents</a></li>
 </ul>
 </li>

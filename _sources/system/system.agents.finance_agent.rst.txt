@@ -12,18 +12,34 @@ system.agents.finance\_agent.agent module
    :show-inheritance:
    :undoc-members:
 
-system.agents.finance\_agent.sub\_agents module
+system.agents.finance\_agent.data\_tools module
 -----------------------------------------------
 
-.. automodule:: system.agents.finance_agent.sub_agents
+.. automodule:: system.agents.finance_agent.data_tools
    :members:
    :show-inheritance:
    :undoc-members:
 
-system.agents.finance\_agent.tools module
------------------------------------------
+system.agents.finance\_agent.market\_data\_tools module
+-------------------------------------------------------
 
-.. automodule:: system.agents.finance_agent.tools
+.. automodule:: system.agents.finance_agent.market_data_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.agents.finance\_agent.prompts module
+-------------------------------------------
+
+.. automodule:: system.agents.finance_agent.prompts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+system.agents.finance\_agent.sub\_agents module
+-----------------------------------------------
+
+.. automodule:: system.agents.finance_agent.sub_agents
    :members:
    :show-inheritance:
    :undoc-members:

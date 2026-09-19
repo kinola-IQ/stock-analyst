@@ -38,8 +38,39 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="interface-routes-module">
-<h2>Interface.routes module<a class="headerlink" href="#interface-routes-module" title="Link to this heading">¶</a></h2>
+<section id="module-Interface.routes">
+<span id="interface-routes-module"></span><h2>Interface.routes module<a class="headerlink" href="#module-Interface.routes" title="Link to this heading">¶</a></h2>
+<p>FastAPI routes for stock analysis.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="Interface.routes.analyze_stock">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">Interface.routes.</span></span><span class="sig-name descname"><span class="pre">analyze_stock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../system/system.utility.html#system.utility.schema.UserInputSchema" title="system.utility.schema.UserInputSchema"><span class="pre">UserInputSchema</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Depends(dependency=&lt;function</span> <span class="pre">verify_api_key&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Interface/routes.html#analyze_stock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Interface.routes.analyze_stock" title="Link to this definition">¶</a></dt>
+<dd><p>Analyze a stock based on ticker symbol.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Interface.routes.get_health">
+<span class="sig-prename descclassname"><span class="pre">Interface.routes.</span></span><span class="sig-name descname"><span class="pre">get_health</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Interface/routes.html#get_health"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Interface.routes.get_health" title="Link to this definition">¶</a></dt>
+<dd><p>returns api status</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Interface.routes.health_check_model">
+<span class="sig-prename descclassname"><span class="pre">Interface.routes.</span></span><span class="sig-name descname"><span class="pre">health_check_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/Interface/routes.html#health_check_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Interface.routes.health_check_model" title="Link to this definition">¶</a></dt>
+<dd><p>Health check for model service.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Interface.routes.health_check_runner">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">Interface.routes.</span></span><span class="sig-name descname"><span class="pre">health_check_runner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Request</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/Interface/routes.html#health_check_runner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Interface.routes.health_check_runner" title="Link to this definition">¶</a></dt>
+<dd><p>Health check for runner service.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Interface.routes.verify_api_key">
+<span class="sig-prename descclassname"><span class="pre">Interface.routes.</span></span><span class="sig-name descname"><span class="pre">verify_api_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Header(PydanticUndefined)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/Interface/routes.html#verify_api_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#Interface.routes.verify_api_key" title="Link to this definition">¶</a></dt>
+<dd><p>Verify the API key from request headers.</p>
+</dd></dl>
+
 </section>
 <section id="module-Interface">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-Interface" title="Link to this heading">¶</a></h2>
@@ -77,7 +108,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">Interface</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Interface package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#interface-routes-module">Interface.routes module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-Interface.routes">Interface.routes module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-Interface">Module contents</a></li>
 </ul>
 </li>

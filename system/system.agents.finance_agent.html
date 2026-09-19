@@ -41,11 +41,364 @@
 <section id="system-agents-finance-agent-agent-module">
 <h2>system.agents.finance_agent.agent module<a class="headerlink" href="#system-agents-finance-agent-agent-module" title="Link to this heading">¶</a></h2>
 </section>
+<section id="module-system.agents.finance_agent.data_tools">
+<span id="system-agents-finance-agent-data-tools-module"></span><h2>system.agents.finance_agent.data_tools module<a class="headerlink" href="#module-system.agents.finance_agent.data_tools" title="Link to this heading">¶</a></h2>
+<p>module to configure agent tools</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.build_and_save_plot">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">build_and_save_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Figure</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#build_and_save_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.build_and_save_plot" title="Link to this definition">¶</a></dt>
+<dd><p>Build a matplotlib Figure from x and y (or accept an existing Figure)
+and save it to the in-memory <cite>plot_store</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – Sequence of x values (required if fig is None).</p></li>
+<li><p><strong>y</strong> – Sequence of y values (required if fig is None).</p></li>
+<li><p><strong>fig</strong> – An existing matplotlib Figure to save (optional).</p></li>
+<li><p><strong>key</strong> – Optional storage key. If not provided a UUID key is generated.</p></li>
+<li><p><strong>plot_kwargs</strong> – Optional dict passed to ax.plot and for title/xlabel/ylabel:
+e.g. {“color”:”C0”, “title”:”Price”, “xlabel”:”Date”, “ylabel”:”Price”}.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>On success returns the storage key (e.g. “a1b2…”).</dt><dd><p>On failure returns “failed: &lt;error message&gt;”.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.clear_plots">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">clear_plots</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#clear_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.clear_plots" title="Link to this definition">¶</a></dt>
+<dd><p>Clear all stored plots from the in-memory plot_store.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.get_guardrails">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">get_guardrails</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#get_guardrails"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.get_guardrails" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.read_skills">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">read_skills</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">skill</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#read_skills"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.read_skills" title="Link to this definition">¶</a></dt>
+<dd><p>Extract instructions that serve as guiding skills.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>skill</strong> (<em>str</em>) – The skill name to retrieve.
+Available skills include:
+- visualizations
+- financial_analysis</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – May raise value error exception if a non-existent skill is requested.</p></li>
+<li><p><strong>These are logged but may propagate up.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The full text of the requested skill instructions.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-system.agents.finance_agent.market_data_tools">
+<span id="system-agents-finance-agent-market-data-tools-module"></span><h2>system.agents.finance_agent.market_data_tools module<a class="headerlink" href="#module-system.agents.finance_agent.market_data_tools" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.market_data_tools.analyse_ticker">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.market_data_tools.</span></span><span class="sig-name descname"><span class="pre">analyse_ticker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/market_data_tools.html#analyse_ticker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.market_data_tools.analyse_ticker" title="Link to this definition">¶</a></dt>
+<dd><p>Execute a comprehensive financial analysis pipeline for a given stock ticker.</p>
+<p>This is a high-level wrapper function that orchestrates a complete research and
+analysis workflow for a stock. It fetches current company data, extracts financial
+metrics, analyzes news sentiment, and produces a
+buy/sell/hold verdict.</p>
+<p>The analysis steps are executed in sequence:
+1. Fetch company data and financials from yfinance
+2. Extract key financial metrics (P/E ratios, revenue, debt, etc.)
+3. Retrieve and analyze recent news headlines for sentiment
+4. Apply decision rules to produce a buy/sell/hold recommendation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>symbol</strong> (<em>str</em>) – The stock ticker symbol to analyze (e.g., “AAPL”, “MSFT”, “GOOGL”).
+Will be converted to uppercase. Must be a valid ticker symbol
+recognized by yfinance.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>A comprehensive analysis result containing:</dt><dd><ul class="simple">
+<li><p>symbol (str): The stock ticker symbol in uppercase</p></li>
+<li><p>company (str): The company name or long name</p></li>
+<li><dl class="simple">
+<dt>metrics (Dict): Financial metrics including:</dt><dd><ul>
+<li><p>current_price (float): Current stock price</p></li>
+<li><p>trailing_pe (float): Trailing price-to-earnings ratio</p></li>
+<li><p>forward_pe (float): Forward P/E ratio</p></li>
+<li><p>market_cap (float): Market capitalization</p></li>
+<li><p>revenue (float): Annual revenue</p></li>
+<li><p>net_income (float): Annual net income</p></li>
+<li><p>revenue_growth_pct (float): Year-over-year revenue growth percentage</p></li>
+<li><p>total_debt (float): Total company debt</p></li>
+<li><p>total_equity (float): Total stockholder equity</p></li>
+<li><p>debt_to_equity (float): Debt-to-equity ratio</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>headlines (List[str]): Recent news headlines for the company</p></li>
+<li><dl class="simple">
+<dt>sentiment_score (float): Aggregate sentiment score (-1.0 to 1.0)</dt><dd><p>where positive indicates bullish sentiment</p>
+</dd>
+</dl>
+</li>
+<li><p>verdict (str): Investment decision: “BUY”, “SELL”, or “HOLD”</p></li>
+<li><dl class="simple">
+<dt>verdict_details (Dict): Detailed reasoning for the decision including:</dt><dd><ul>
+<li><p>score (int): Net score from decision rules</p></li>
+<li><p>reasons (List[str]): List of factors that influenced the decision</p></li>
+<li><p>recommendation (str): Full recommendation text</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – May raise various exceptions if yfinance fails to fetch data,
+    if the ticker symbol is invalid, or if network issues occur.
+    These are logged but may propagate up.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>result = analyse_ticker(“AAPL”)
+print(f”Verdict for {result[‘symbol’]}: {result[‘verdict’]}”)
+print(f”Current Price: ${result[‘metrics’][‘current_price’]}”)
+print(f”Sentiment: {result[‘sentiment_score’]}”)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.market_data_tools.financial_data_tool">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.market_data_tools.</span></span><span class="sig-name descname"><span class="pre">financial_data_tool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symbol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'historical'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'fundamentals'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'news'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'sentiment'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('historical',</span> <span class="pre">'fundamentals')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fundamentals_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">news_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/market_data_tools.html#financial_data_tool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.market_data_tools.financial_data_tool" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieve issuer-specific financial data for a market instrument from
+EOD Historical Data (EODHD).</p>
+<dl>
+<dt>PURPOSE</dt><dd><p>Use this tool when the agent needs information directly related to
+a company/security rather than country-level macroeconomic context.</p>
+</dd>
+<dt>SUPPORTED DATASETS</dt><dd><dl class="simple">
+<dt>historical:</dt><dd><p>Daily end-of-day OHLCV observations. When dates are omitted, the
+tool intentionally limits the request to approximately the most
+recent 365 calendar days to avoid returning an unnecessarily large
+dataset.</p>
+</dd>
+<dt>fundamentals:</dt><dd><p>Company profile, valuation, technical metrics, earnings,
+dividends/splits, ownership, and/or financial statements,
+depending on EODHD coverage and the <cite>fundamentals_filter</cite>.
+EODHD may return missing fields for securities whose underlying
+issuer does not report them.</p>
+</dd>
+<dt>news:</dt><dd><p>Recent financial-news articles associated with the requested
+ticker. Each article may contain title, publication date, link,
+mentioned symbols, tags, and sentiment fields.</p>
+</dd>
+<dt>sentiment:</dt><dd><p>EODHD daily aggregated sentiment observations for the requested
+ticker over the requested date range.</p>
+</dd>
+</dl>
+</dd>
+<dt>SYMBOL FORMAT</dt><dd><p>Pass EODHD’s exchange-qualified symbol, not merely the local ticker.
+Example for AIICO on the Nigerian Exchange:</p>
+<blockquote>
+<div><p>“AIICO.XNSA”</p>
+</div></blockquote>
+</dd>
+<dt>DATE SEMANTICS</dt><dd><p>Dates must use YYYY-MM-DD.
+<cite>start_date</cite> and <cite>end_date</cite> apply to historical, news, and sentiment
+requests.
+If historical data is requested and no dates are supplied, the tool
+uses the previous 365 calendar days.
+If only <cite>start_date</cite> is supplied, <cite>end_date</cite> defaults to today.
+If only <cite>end_date</cite> is supplied, <cite>start_date</cite> is one year before it.</p>
+</dd>
+<dt>FUNDAMENTALS FILTER</dt><dd><p><cite>fundamentals_filter</cite> is passed directly to EODHD’s <cite>filter</cite>
+parameter. Omit it to request EODHD’s complete fundamentals object.
+Use filters to reduce response size, for example:</p>
+<blockquote>
+<div><p>“General”
+“Highlights,Valuation,Technicals”
+“Financials::Income_Statement::yearly”
+“Financials::Balance_Sheet::yearly”
+“General,Highlights,Valuation,Earnings”</p>
+</div></blockquote>
+</dd>
+<dt>ERROR SEMANTICS</dt><dd><p>This function NEVER raises an HTTP/API error to the agent.
+Instead, it returns an <cite>errors</cite> array containing:</p>
+<blockquote>
+<div><p>code
+message
+source
+endpoint
+retryable
+http_status (when available)
+details (when available)</p>
+</div></blockquote>
+<dl>
+<dt><cite>status</cite> is:</dt><dd><p>“success”  -&gt; every requested dataset succeeded.
+“partial”  -&gt; at least one dataset succeeded and at least one</p>
+<blockquote>
+<div><p>dataset failed.</p>
+</div></blockquote>
+<p>“error”    -&gt; all requested datasets failed.</p>
+</dd>
+</dl>
+<p>When <cite>status</cite> is “partial”, the agent must use only the successfully
+returned datasets and must not infer missing information.</p>
+</dd>
+<dt>RETURNS</dt><dd><dl class="simple">
+<dt>A JSON-serializable dictionary with:</dt><dd><p>tool
+status
+ok
+request
+data
+errors</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.market_data_tools.macro_context_tool">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.market_data_tools.</span></span><span class="sig-name descname"><span class="pre">macro_context_tool</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">country_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ng'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_signals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_fx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_indicators</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_trade</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_currency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'USD'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quote_currencies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('NGN',)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indicator_category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trade_top_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/market_data_tools.html#macro_context_tool"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.market_data_tools.macro_context_tool" title="Link to this definition">¶</a></dt>
+<dd><p>Retrieve country-level macroeconomic and market-context data from
+Africa API.</p>
+<dl>
+<dt>PURPOSE</dt><dd><p>Use this tool when the agent needs contextual information about the
+economic environment surrounding a company or market. This tool does
+not provide issuer-specific financial statements; those belong in
+<cite>financial_data_tool</cite>.</p>
+</dd>
+<dt>COUNTRY</dt><dd><p><cite>country_code</cite> is a two-letter country code.
+The default “ng” means Nigeria.</p>
+</dd>
+<dt>SIGNALS</dt><dd><dl class="simple">
+<dt><cite>include_signals=True</cite> requests:</dt><dd><p>GET /v1/countries/{country_code}/signals</p>
+</dd>
+</dl>
+<p>Country signals can contain current/selected observations such as
+policy rates, inflation, official exchange rates, FX observations,
+market snapshots, commodity benchmarks, trade summaries, and other
+country-linked records depending on the country’s available coverage.</p>
+<p>The returned records can have different frequencies and reporting
+periods. The agent must inspect their dates/freshness rather than
+assuming every value represents today’s condition.</p>
+</dd>
+<dt>FX</dt><dd><dl class="simple">
+<dt><cite>include_fx=True</cite> requests the latest FX rates through:</dt><dd><p>GET /v1/markets/fx-rates</p>
+</dd>
+</dl>
+<p><cite>base_currency</cite> defaults to USD.
+<cite>quote_currencies</cite> defaults to (“NGN”,).</p>
+</dd>
+<dt>INDICATORS</dt><dd><dl class="simple">
+<dt><cite>include_indicators=True</cite> queries:</dt><dd><p>GET /v1/data</p>
+</dd>
+<dt>Use <cite>metric_keys</cite> when the agent needs specific metrics, for example:</dt><dd><p>“gdp_current_usd”
+“trade_balance_usd”
+“exports_goods_services_usd”
+“imports_goods_services_usd”
+“policy_rate_pct”</p>
+</dd>
+</dl>
+<p><cite>indicator_category</cite> may be used to request a category such as
+“economy” when specific metric keys are not supplied.</p>
+<p><cite>latest=True</cite> means “latest stored observation available from the
+provider”; it does NOT mean “measured today.”</p>
+</dd>
+<dt>TRADE</dt><dd><dl class="simple">
+<dt><cite>include_trade=True</cite> requests:</dt><dd><p>GET /v1/trade/overview/{country_code}</p>
+</dd>
+</dl>
+<p>This can return aggregate trade series, latest snapshots, leading
+export/import partners, and leading product categories where coverage
+exists.</p>
+</dd>
+<dt>ERROR SEMANTICS</dt><dd><p>This function NEVER raises an API/HTTP error to the agent.
+It returns structured errors with:</p>
+<blockquote>
+<div><p>code
+message
+source
+endpoint
+retryable
+http_status (when available)
+details (when available)</p>
+</div></blockquote>
+<dl class="simple">
+<dt><cite>status</cite> is:</dt><dd><p>“success”  -&gt; all requested datasets succeeded.
+“partial”  -&gt; some datasets succeeded and some failed.
+“error”    -&gt; all requested datasets failed.</p>
+</dd>
+</dl>
+<p>If an optional dataset fails, the agent must not fabricate or infer
+its missing values from another dataset.</p>
+</dd>
+<dt>IMPORTANT DATA-PROVENANCE RULE</dt><dd><p>Africa API aggregates observations from external sources. Every
+returned indicator should be interpreted using its source, reporting
+year/period, frequency, and freshness when those fields are present.</p>
+</dd>
+<dt>RETURNS</dt><dd><dl class="simple">
+<dt>A JSON-serializable dictionary with:</dt><dd><p>tool
+status
+ok
+request
+data
+errors</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-system.agents.finance_agent.prompts">
+<span id="system-agents-finance-agent-prompts-module"></span><h2>system.agents.finance_agent.prompts module<a class="headerlink" href="#module-system.agents.finance_agent.prompts" title="Link to this heading">¶</a></h2>
+<p>module serving system prompts</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.prompts.foreign_stocks_prompt">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.prompts.</span></span><span class="sig-name descname"><span class="pre">foreign_stocks_prompt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/prompts.html#foreign_stocks_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.prompts.foreign_stocks_prompt" title="Link to this definition">¶</a></dt>
+<dd><p>Prompt for foreign stocks agent</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.prompts.local_stocks_prompt">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.prompts.</span></span><span class="sig-name descname"><span class="pre">local_stocks_prompt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/prompts.html#local_stocks_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.prompts.local_stocks_prompt" title="Link to this definition">¶</a></dt>
+<dd><p>Prompt for local stocks agent</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.prompts.root_agent_prompt">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.prompts.</span></span><span class="sig-name descname"><span class="pre">root_agent_prompt</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/prompts.html#root_agent_prompt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.prompts.root_agent_prompt" title="Link to this definition">¶</a></dt>
+<dd><p>Prompt for root agent</p>
+</dd></dl>
+
+</section>
 <section id="system-agents-finance-agent-sub-agents-module">
 <h2>system.agents.finance_agent.sub_agents module<a class="headerlink" href="#system-agents-finance-agent-sub-agents-module" title="Link to this heading">¶</a></h2>
-</section>
-<section id="system-agents-finance-agent-tools-module">
-<h2>system.agents.finance_agent.tools module<a class="headerlink" href="#system-agents-finance-agent-tools-module" title="Link to this heading">¶</a></h2>
 </section>
 <section id="module-system.agents.finance_agent">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.agents.finance_agent" title="Link to this heading">¶</a></h2>
