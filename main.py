@@ -9,6 +9,8 @@ from fastapi.exceptions import RequestValidationError
 import uvicorn
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.apps.app import App
+from google.adk.agents.context_cache_config import ContextCacheConfig
 
 from system.utility.logger import register_http_logging, logger
 from system.utility.utils import get_env
@@ -20,7 +22,7 @@ from Interface.routes import router
 load_dotenv()
 
 # Validate critical environment variables
-GOOGLE_GENAI_API_KEY = get_env("GOOGLE_API_KEY")
+GOOGLE_GENAI_API_KEY = get_env("GEMINI_API_KEY")
 API_KEY = get_env("API_KEY")
 
 if not GOOGLE_GENAI_API_KEY:
@@ -54,9 +56,19 @@ async def lifespan(app: FastAPI):
         )
         
         agent_instance = agent.root_agent()
+
+        adk_app = App(
+            name=APP_NAME,
+            root_agent=agent_instance,
+            context_cache_config=ContextCacheConfig(
+                cache_intervals=10,
+                ttl_seconds=1800,
+                min_tokens=2048,
+            ),
+        )
+
         runner = Runner(
-            agent=agent_instance,
-            app_name=APP_NAME,
+            app=adk_app,
             session_service=session_service,
         )
 

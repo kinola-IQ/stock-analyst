@@ -33,55 +33,64 @@ def read_skills(skill: str) -> str:
 # In-memory storage for plots: key -> matplotlib.figure.Figure
 plot_store: Dict[str, Figure] = {}
 
+def save_figure(fig: Figure, key: str | None = None) -> str:
+    if key is None:
+        key = str(uuid.uuid4())
+
+    plot_store[key] = fig
+    return key
+
 def build_and_save_plot(
-    x: Optional[Sequence[float]] = None,
-    y: Optional[Sequence[float]] = None,
-    fig: Optional[Figure] = None,
+    x: list[float],
+    y: list[float],
     key: Optional[str] = None,
-    plot_kwargs: Optional[Dict[str, Any]] = None
+    plot_kwargs: Optional[dict[str, Any]] = None,
 ) -> str:
     """
-    Build a matplotlib Figure from x and y (or accept an existing Figure)
-    and save it to the in-memory `plot_store`.
+    Create a matplotlib plot from x and y values and save the figure
+    into the in-memory plot_store.
 
     Args:
-        x: Sequence of x values (required if fig is None).
-        y: Sequence of y values (required if fig is None).
-        fig: An existing matplotlib Figure to save (optional).
-        key: Optional storage key. If not provided a UUID key is generated.
-        plot_kwargs: Optional dict passed to ax.plot and for title/xlabel/ylabel:
-            e.g. {"color":"C0", "title":"Price", "xlabel":"Date", "ylabel":"Price"}.
+        x: X-axis values.
+        y: Y-axis values.
+        key: Optional storage key. A UUID is generated if omitted.
+        plot_kwargs: Optional plotting configuration.
 
     Returns:
-        str: On success returns the storage key (e.g. "a1b2...").
-             On failure returns "failed: <error message>".
+        str: Storage key on success, otherwise an error message.
     """
     try:
+        if len(x) != len(y):
+            return "failed: x and y must have the same length"
+
         plot_kwargs = plot_kwargs or {}
 
-        # Build a new figure if none provided
-        if fig is None:
-            if x is None or y is None:
-                return "failed: either provide an existing Figure or both x and y data"
-            fig, ax = plt.subplots()
-            ax.plot(x, y, **{k: v for k, v in plot_kwargs.items() if k not in ("title", "xlabel", "ylabel")})
-            if "title" in plot_kwargs:
-                ax.set_title(plot_kwargs["title"])
-            if "xlabel" in plot_kwargs:
-                ax.set_xlabel(plot_kwargs["xlabel"])
-            if "ylabel" in plot_kwargs:
-                ax.set_ylabel(plot_kwargs["ylabel"])
-            fig.tight_layout()
+        fig, ax = plt.subplots()
 
-        # Generate a unique key if not supplied
-        if key is None:
-            key = str(uuid.uuid4())
+        plot_args = {
+            k: v
+            for k, v in plot_kwargs.items()
+            if k not in ("title", "xlabel", "ylabel")
+        }
 
-        # Save to in-memory store
-        plot_store[key] = fig
-        return key
+        ax.plot(x, y, **plot_args)
+
+        if "title" in plot_kwargs:
+            ax.set_title(plot_kwargs["title"])
+
+        if "xlabel" in plot_kwargs:
+            ax.set_xlabel(plot_kwargs["xlabel"])
+
+        if "ylabel" in plot_kwargs:
+            ax.set_ylabel(plot_kwargs["ylabel"])
+
+        fig.tight_layout()
+        save_figure(fig, key)
+
+        return "success: plot saved with key {}".format(key)
+
     except Exception as err:
-        return f"failed: {err}"
+        return f"failed: {str(err)}"
 
 def get_guardrails() -> str:
     return read_skills('standard guide')

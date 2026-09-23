@@ -1,5 +1,7 @@
 """Gemini model initialization and caching with API setup."""
 
+import os
+
 from dotenv import load_dotenv
 from google.adk.models.lite_llm import LiteLlm
 from .custom_exceptions import ModelLoadError
@@ -13,11 +15,12 @@ _MODEL = None
 
 
 @retry_on_exception(max_attempts=3, delay=1.0)
-async def load_model(model_name: str = "groq/llama-3.3-70b-versatile"):
+async def load_model(model_name: str = "groq/openai/gpt-oss-20b"):
     """Load and cache the model name on startup."""
     global _MODEL
+
     try:
-        _MODEL = LiteLlm(model=model_name)
+        _MODEL = LiteLlm(model=model_name,drop_params=True)
         logger.info("Model '%s' loaded successfully", model_name)
     except Exception as err:
         logger.error("Model loading failed: %s", err)

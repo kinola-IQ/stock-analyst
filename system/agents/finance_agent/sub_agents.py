@@ -37,7 +37,7 @@ def foreign_stocks_agent() -> Agent:
         model=AGENT_MODEL,
         instruction=foreign_stocks_prompt(),
 
-        tools=[FunctionTool(analyse_ticker), FunctionTool(DuckDuckGoSearchRun)]
+        tools=[FunctionTool(analyse_ticker), FunctionTool(DuckDuckGoSearchRun)],
         # The result of this agent will be stored in the session state
         #  with this key.
         output_key="foreign_results",
@@ -73,7 +73,7 @@ def local_stocks_agent() -> Agent:
             FunctionTool(PythonREPLTool),
             FunctionTool(financial_data_tool),
             FunctionTool(macro_context_tool),
-            FunctionTool(read_skills)]
+            FunctionTool(read_skills)],
         # The result of this agent will be stored in the session state
         #  with this key.
         output_key="local_results",

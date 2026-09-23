@@ -4,7 +4,7 @@ import time
 from logging.handlers import RotatingFileHandler
 
 logging.basicConfig(
-    level=logging.INFO,  # log all levels INFO and above
+    level=logging.DEBUG,  # log all levels INFO and above
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 

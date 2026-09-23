@@ -1,8 +1,9 @@
 """module to configure the main root agent"""
 
-# from google.adk.code_executors import BuiltInCodeExecutor
 from google.adk.agents import LlmAgent
-from google.adk.tools import google_search
+from google.adk.tools import FunctionTool
+# from google.adk.tools.google_search_tool import GoogleSearchTool
+from langchain_community.tools import DuckDuckGoSearchRun
 
 from system.agents.finance_agent.prompts import root_agent_prompt
 
@@ -14,6 +15,7 @@ from ..finance_agent.sub_agents import foreign_stocks_agent, local_stocks_agent
 from ...utility import model
 from .data_tools import build_and_save_plot
 
+google_search = FunctionTool(DuckDuckGoSearchRun)
 
 def root_agent() -> LlmAgent:
     """Create the root Research Coordinator agent that orchestrates stock analysis.
