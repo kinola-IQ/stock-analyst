@@ -69,57 +69,69 @@
 <span class="c1"># In-memory storage for plots: key -&gt; matplotlib.figure.Figure</span>
 <span class="n">plot_store</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Figure</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
+<div class="viewcode-block" id="save_figure">
+<a class="viewcode-back" href="../../../../system/system.agents.finance_agent.html#system.agents.finance_agent.data_tools.save_figure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">:</span> <span class="n">Figure</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+
+    <span class="n">plot_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">fig</span>
+    <span class="k">return</span> <span class="n">key</span></div>
+
+
 <div class="viewcode-block" id="build_and_save_plot">
 <a class="viewcode-back" href="../../../../system/system.agents.finance_agent.html#system.agents.finance_agent.data_tools.build_and_save_plot">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_and_save_plot</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">y</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">fig</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Figure</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
     <span class="n">key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">plot_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">plot_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Build a matplotlib Figure from x and y (or accept an existing Figure)</span>
-<span class="sd">    and save it to the in-memory `plot_store`.</span>
+<span class="sd">    Create a matplotlib plot from x and y values and save the figure</span>
+<span class="sd">    into the in-memory plot_store.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        x: Sequence of x values (required if fig is None).</span>
-<span class="sd">        y: Sequence of y values (required if fig is None).</span>
-<span class="sd">        fig: An existing matplotlib Figure to save (optional).</span>
-<span class="sd">        key: Optional storage key. If not provided a UUID key is generated.</span>
-<span class="sd">        plot_kwargs: Optional dict passed to ax.plot and for title/xlabel/ylabel:</span>
-<span class="sd">            e.g. {"color":"C0", "title":"Price", "xlabel":"Date", "ylabel":"Price"}.</span>
+<span class="sd">        x: X-axis values.</span>
+<span class="sd">        y: Y-axis values.</span>
+<span class="sd">        key: Optional storage key. A UUID is generated if omitted.</span>
+<span class="sd">        plot_kwargs: Optional plotting configuration.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        str: On success returns the storage key (e.g. "a1b2...").</span>
-<span class="sd">             On failure returns "failed: &lt;error message&gt;".</span>
+<span class="sd">        str: Storage key on success, otherwise an error message.</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">"failed: x and y must have the same length"</span>
+
         <span class="n">plot_kwargs</span> <span class="o">=</span> <span class="n">plot_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
 
-        <span class="c1"># Build a new figure if none provided</span>
-        <span class="k">if</span> <span class="n">fig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">y</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s2">"failed: either provide an existing Figure or both x and y data"</span>
-            <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
-            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"xlabel"</span><span class="p">,</span> <span class="s2">"ylabel"</span><span class="p">)})</span>
-            <span class="k">if</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
-                <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"title"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="s2">"xlabel"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
-                <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"xlabel"</span><span class="p">])</span>
-            <span class="k">if</span> <span class="s2">"ylabel"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
-                <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"ylabel"</span><span class="p">])</span>
-            <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
 
-        <span class="c1"># Generate a unique key if not supplied</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">plot_args</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="s2">"xlabel"</span><span class="p">,</span> <span class="s2">"ylabel"</span><span class="p">)</span>
+        <span class="p">}</span>
 
-        <span class="c1"># Save to in-memory store</span>
-        <span class="n">plot_store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">fig</span>
-        <span class="k">return</span> <span class="n">key</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">plot_args</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">"title"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"title"</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="s2">"xlabel"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"xlabel"</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="s2">"ylabel"</span> <span class="ow">in</span> <span class="n">plot_kwargs</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">plot_kwargs</span><span class="p">[</span><span class="s2">"ylabel"</span><span class="p">])</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">save_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">"success: plot saved with key </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"failed: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"failed: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 <div class="viewcode-block" id="get_guardrails">

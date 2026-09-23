@@ -38,34 +38,70 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="system-agents-finance-agent-agent-module">
-<h2>system.agents.finance_agent.agent module<a class="headerlink" href="#system-agents-finance-agent-agent-module" title="Link to this heading">¶</a></h2>
+<section id="module-system.agents.finance_agent.agent">
+<span id="system-agents-finance-agent-agent-module"></span><h2>system.agents.finance_agent.agent module<a class="headerlink" href="#module-system.agents.finance_agent.agent" title="Link to this heading">¶</a></h2>
+<p>module to configure the main root agent</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.agent.root_agent">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.agent.</span></span><span class="sig-name descname"><span class="pre">root_agent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LlmAgent</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/agent.html#root_agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.agent.root_agent" title="Link to this definition">¶</a></dt>
+<dd><p>Create the root Research Coordinator agent that orchestrates stock analysis.</p>
+<p>This function initializes and returns a root LLM agent that coordinates the
+entire research and analysis workflow. The agent acts as a Research Coordinator,
+making autonomous decisions about research strategy, invoking appropriate tools,
+and synthesizing findings into actionable investment recommendations.</p>
+<p>The agent has access to tools:
+1. <cite>build_and_save_plot</cite>: A tool for creating and saving plots based on analyzed data.
+2. <cite>google_search</cite>: A tool for performing web searches to gather qualitative information and identify if the stock is foreign or local.</p>
+<p>The agent is instructed to:
+- Maintain autonomy in choosing research approach and depth
+- Synthesize information into clear, factual summaries
+- Document any data gaps or ambiguities
+- Prioritize accuracy, transparency, and reproducibility</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A fully configured Research Coordinator agent instance that can:</dt><dd><ul class="simple">
+<li><p>Receive ticker symbols as input</p></li>
+<li><p>Execute multi-step research workflows</p></li>
+<li><p>Call available tools with appropriate parameters</p></li>
+<li><p>Return structured analysis results with investment verdicts</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>LlmAgent</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the LLM model cannot be loaded or API keys are not set.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>agent = root_agent()
+# The agent can then be used in workflows to analyze stocks</p>
+</dd></dl>
+
 </section>
 <section id="module-system.agents.finance_agent.data_tools">
 <span id="system-agents-finance-agent-data-tools-module"></span><h2>system.agents.finance_agent.data_tools module<a class="headerlink" href="#module-system.agents.finance_agent.data_tools" title="Link to this heading">¶</a></h2>
 <p>module to configure agent tools</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.build_and_save_plot">
-<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">build_and_save_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Figure</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#build_and_save_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.build_and_save_plot" title="Link to this definition">¶</a></dt>
-<dd><p>Build a matplotlib Figure from x and y (or accept an existing Figure)
-and save it to the in-memory <cite>plot_store</cite>.</p>
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">build_and_save_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#build_and_save_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.build_and_save_plot" title="Link to this definition">¶</a></dt>
+<dd><p>Create a matplotlib plot from x and y values and save the figure
+into the in-memory plot_store.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> – Sequence of x values (required if fig is None).</p></li>
-<li><p><strong>y</strong> – Sequence of y values (required if fig is None).</p></li>
-<li><p><strong>fig</strong> – An existing matplotlib Figure to save (optional).</p></li>
-<li><p><strong>key</strong> – Optional storage key. If not provided a UUID key is generated.</p></li>
-<li><p><strong>plot_kwargs</strong> – Optional dict passed to ax.plot and for title/xlabel/ylabel:
-e.g. {“color”:”C0”, “title”:”Price”, “xlabel”:”Date”, “ylabel”:”Price”}.</p></li>
+<li><p><strong>x</strong> – X-axis values.</p></li>
+<li><p><strong>y</strong> – Y-axis values.</p></li>
+<li><p><strong>key</strong> – Optional storage key. A UUID is generated if omitted.</p></li>
+<li><p><strong>plot_kwargs</strong> – Optional plotting configuration.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>On success returns the storage key (e.g. “a1b2…”).</dt><dd><p>On failure returns “failed: &lt;error message&gt;”.</p>
-</dd>
-</dl>
-</p>
+<dd class="field-even"><p>Storage key on success, otherwise an error message.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>
@@ -109,6 +145,11 @@ Available skills include:
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.data_tools.save_figure">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.data_tools.</span></span><span class="sig-name descname"><span class="pre">save_figure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Figure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/data_tools.html#save_figure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.data_tools.save_figure" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </section>
 <section id="module-system.agents.finance_agent.market_data_tools">
@@ -397,8 +438,47 @@ errors</p>
 </dd></dl>
 
 </section>
-<section id="system-agents-finance-agent-sub-agents-module">
-<h2>system.agents.finance_agent.sub_agents module<a class="headerlink" href="#system-agents-finance-agent-sub-agents-module" title="Link to this heading">¶</a></h2>
+<section id="module-system.agents.finance_agent.sub_agents">
+<span id="system-agents-finance-agent-sub-agents-module"></span><h2>system.agents.finance_agent.sub_agents module<a class="headerlink" href="#module-system.agents.finance_agent.sub_agents" title="Link to this heading">¶</a></h2>
+<p>module to configure sub agents</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.sub_agents.foreign_stocks_agent">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.sub_agents.</span></span><span class="sig-name descname"><span class="pre">foreign_stocks_agent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LlmAgent</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/sub_agents.html#foreign_stocks_agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.sub_agents.foreign_stocks_agent" title="Link to this definition">¶</a></dt>
+<dd><p>Create a sub-agent for foreign company investigation.</p>
+<p>The agent extracts financial information about non-african foreign stocks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A configured sub agent with yfinance access. The agent
+is intended to be invoked by the root coordinator agent.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Agent</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the model cannot be loaded or required API keys are missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="system.agents.finance_agent.sub_agents.local_stocks_agent">
+<span class="sig-prename descclassname"><span class="pre">system.agents.finance_agent.sub_agents.</span></span><span class="sig-name descname"><span class="pre">local_stocks_agent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LlmAgent</span></span></span><a class="reference internal" href="../_modules/system/agents/finance_agent/sub_agents.html#local_stocks_agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#system.agents.finance_agent.sub_agents.local_stocks_agent" title="Link to this definition">¶</a></dt>
+<dd><p>Create a local stocks agent for analyzing Nigerian and African stocks.</p>
+<p>The agent uses pythonRepl to run python codes performing analysis requested for by the root agent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A configured local stocks sub agent with programming capability. The agent
+is intended to be invoked by the root coordinator agent.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Agent</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If the model cannot be loaded or required API keys are missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-system.agents.finance_agent">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-system.agents.finance_agent" title="Link to this heading">¶</a></h2>
